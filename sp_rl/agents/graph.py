@@ -18,9 +18,9 @@ class Graph(object):
     self.G = nx.from_numpy_matrix(adj_mat)
     self.nedges = len(self.G.edges())
     nx.set_edge_attributes(self.G, -1, 'status')
-    if pos is not None:
+    if pos:
       nx.set_node_attributes(self.G, pos, 'pos')
-    if edge_priors is not None:
+    if edge_priors:
       nx.set_edge_attributes(self.G, edge_priors, 'p_free')
     self.curr_sp = self.shortest_path(self.source, self.target, 'weight', 'euc_dist')
     self.curr_sp_len = self.path_length(self.in_edge_form(self.curr_sp))
@@ -28,7 +28,7 @@ class Graph(object):
     self.num_valid_checked = 0.0
     self.total_checked = 0.0
     self.lite_ftrs = lite_ftrs
-    if self.lite_ftrs: self.num_features = 2
+    if self.lite_ftrs: self.num_features = 8
     else:
       self.num_features = 7 
       start_t = time.time()
@@ -75,34 +75,28 @@ class Graph(object):
 
 
   def shortest_path(self, source, target, attr='weight', dist_fn = 'euc_dist'):
-    if self.pos is not None:
+    if self.pos:
       return nx.astar_path(self.G, source, target, self.dist_fns[dist_fn], 'weight')
     else:
-      return nx.shortest_path(self.G, source, target, weight='weight')
+      return nx.shortest_path(self.G, source, target)
   
-    
+
+  
   def update_edge(self, edge, status, prev_stat=-1):
     self.G[edge[0]][edge[1]]['status'] = status #update edge status
-    # if status == 0 or status == -1:
-    if status == 0: 
-      self.G[edge[0]][edge[1]]['weight'] = np.inf #if invalid set weight to infinity
-      if prev_stat == -1:
-        self.num_invalid_checked += 1.0
-        self.total_checked += 1.0 
+    if status == 0 or status == -1:
+      if status == 0: 
+        self.G[edge[0]][edge[1]]['weight'] = np.inf #if invalid set weight to infinity
+        if prev_stat == -1:
+          self.num_invalid_checked += 1.0
+          self.total_checked += 1.0 
+      if status == -1: 
+        self.G[edge[0]][edge[1]]['weight'] = self.adj_mat[edge[0], edge[1]]
+        if prev_stat == 0 or prev_stat == 1:
+          self.total_checked -= 1.0
+          self.num_invalid_checked -= 1.0
       self.curr_sp = self.shortest_path(self.source, self.target, 'weight', 'euc_dist') #recalculate shortest path if edge invalid
       self.curr_sp_len = self.path_length(self.in_edge_form(self.curr_sp))
-    
-    if status == -1: 
-      self.G[edge[0]][edge[1]]['weight'] = self.adj_mat[edge[0], edge[1]]
-      if prev_stat == 0:
-        self.num_invalid_checked -= 1.0
-        self.total_checked -= 1.0
-      if prev_stat == 1:
-        self.num_valid_checked -=1.0
-        self.total_checked -=1.0
-      self.curr_sp = self.shortest_path(self.source, self.target, 'weight', 'euc_dist') #recalculate shortest path if edge invalid
-      self.curr_sp_len = self.path_length(self.in_edge_form(self.curr_sp))
-
       #recalcuate features if required
       # if not self.lite_ftrs:
       #   ksp_nodes_temp = []
@@ -152,18 +146,26 @@ class Graph(object):
     if num_path_edges > 1:
       forward_score = 1.0 - (idx*1.0/(num_path_edges-1.0))
       # backward_score = idx*1./(num_path_edges-1.0)
-    # forward_score = 0.0
-    # backward_score = 0.0
-    # if idx == 0: forward_score = 1.0
-    # if idx == num_path_edges-1: backward_score = 1.0
+    forward_oh = 0.0
+    backward_oh = 0.0
+    alt_oh = 0.0
+
+    if idx == 0: forward_oh = 1.0
+    if idx == num_path_edges-1: backward_oh = 1.0
+    if itr%2 == 0: alt_oh = backward_oh
+    else: alt_oh = forward_oh
+
     delta_len, delta_progress = self.get_edge_util(edge)
     # raw_input('..')
 
     if self.lite_ftrs:
-      return np.array([1.0 - attr_dict['p_free'], 
-              forward_score])#,
-              # delta_len,
-              # delta_progress])
+      return  np.array([1.0 - attr_dict['p_free'], 
+              forward_score,
+              delta_len,
+              delta_progress,
+              forward_oh,
+              backward_oh,
+              alt_oh])
     
     # k_short_num = attr_dict['k_short_num']
     # k_short_len = attr_dict['k_short_len']
@@ -191,10 +193,14 @@ class Graph(object):
 
   def get_features(self, edges, itr):
     features = np.array([self.edge_features(edge, i, len(edges), itr) for i, edge in enumerate(edges)])
-    if self.num_features >= 3:
-      if np.max(features[:,2]) > 0:
-        features[:,2] = features[:,2]/np.max(features[:,2])
-    return features
+    prior_oh = np.zeros(shape=(features.shape[0], 1))
+    prior_oh[np.argmax(features[:,0])] = 1.0
+    if self.num_features >=3:
+      features[:,2] = features[:,2]/np.max(features[:,2])
+    # print 'Normalized', features
+    # raw_input('..')
+    features_final = np.concatenate((features, prior_oh), axis=1)
+    return features_final
 
   def get_priors(self, edges):
     return list(map(lambda e: 1.0 - self.G[e[0]][e[1]]['p_free'], edges))
@@ -213,13 +219,12 @@ class Graph(object):
     new_sp_len = self.curr_sp_len
   
     delta_len = new_sp_len - curr_sp_len
-    # print delta_len
     delta_progress = 0.0
     for e in self.in_edge_form(new_sp):
       if self.G[e[0]][e[1]]['status'] == -1:
         # print e
         delta_progress += 1.0
-    delta_progress = delta_progress#/(len(new_sp)-1)
+    delta_progress = delta_progress/(len(new_sp)-1)
     self.update_edge(query_edge, -1, 0)
     return delta_len, delta_progress
 
@@ -236,7 +241,7 @@ class Graph(object):
     return np.linalg.norm(pos1 - pos2)
 
   def path_length(self, path):
-    return sum(map(lambda e: self.adj_mat[e[0], e[1]], path))
+    return sum(map(lambda e: self.euc_dist(e[0], e[1]), path))
 
   @property
   def curr_shortest_path(self):

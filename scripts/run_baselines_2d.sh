@@ -8,7 +8,6 @@ base_folder='../../rss_sp_rl/experiments/graph_collision_checking_datasets/'
 folders=(${base_folder}'dataset_2d_1/lsp_selectors' ${base_folder}'dataset_2d_2/lsp_selectors' ${base_folder}'dataset_2d_3/lsp_selectors'\
          ${base_folder}'dataset_2d_4/lsp_selectors' ${base_folder}'dataset_2d_5/lsp_selectors' ${base_folder}'dataset_2d_6/lsp_selectors'\
          ${base_folder}'dataset_2d_7/lsp_selectors')
-         # ${base_folder}'dataset_2d_8/lsp_selectors')
 
 
 num_episodes=200

@@ -46,6 +46,7 @@ class DaggerAgent(Agent):
     D = ExperienceBuffer() 
     policy_curr = deepcopy(self.policy)
     best_valid_reward = -np.inf
+
     for i in xrange(num_iterations):
       if i == 0:
         beta = 1.0 #Rollout with expert initially
@@ -63,7 +64,6 @@ class DaggerAgent(Agent):
         self.G.reset()
         path = self.get_path(self.G)
         ftrs = torch.tensor(self.G.get_features([self.train_env.edge_from_action(a) for a in path], j))
-        # print ftrs
         probs = policy_curr.predict(ftrs)
         probs = probs.detach().numpy()
         if render:
@@ -82,7 +82,7 @@ class DaggerAgent(Agent):
           idx_l = np.random.choice(np.flatnonzero(probs==probs.max())) #random tie breaking
           idx_exp = self.expert(feas_actions, j, self.train_env, self.G)
           if heuristic is not None: idx_heuristic = self.EXPERTS[heuristic](feas_actions, j, self.train_env, self.G) 
-          else: idx_heuristic = idx_exp          
+          else: idx_heuristic = idx_exp
           #Aggregate the data
           D.push(ftrs, torch.tensor([idx_exp]))
           #Execute mixture
@@ -120,12 +120,11 @@ class DaggerAgent(Agent):
       dataset_size_per_iter.append(len(D))
       state_dict_per_iter[i] = deepcopy(policy_curr.model.state_dict())
       # print('Running validation')
-      
-      #Doing validation if num_valid_episodes > 0
+      #Doing validation if num_valid episodes > 0
       if num_valid_episodes == 0:
         self.policy = deepcopy(policy_curr)
         mean_reward = 0
-        reward_std = 0      
+        reward_std = 0
       else:
         valid_rewards_dict, valid_avg_rewards_dict = self.test(self.valid_env, policy_curr, num_valid_episodes)
         valid_rewards     = [it[1] for it in sorted(valid_rewards_dict.items(), key=operator.itemgetter(0))]
@@ -137,8 +136,8 @@ class DaggerAgent(Agent):
           # print('Best policy yet, saving')
           self.policy = deepcopy(policy_curr)
           best_valid_reward = mean_reward
-      # print 'Average validation reward = {}, std = {}, best reward yet = {}'.format(mean_reward, reward_std, best_valid_reward)
-      
+
+      # print 'Average validation reward = {}, std = {}, best reward yet = {}'.format(mean_reward, reward_std, best_valid_reward)      
       # raw_input('...')
       validation_reward.append(mean_reward)
       validation_std.append(reward_std)
@@ -153,7 +152,7 @@ class DaggerAgent(Agent):
     # print policy.model.fc.weight, policy.model.fc.bias
     test_rewards = {}
     test_avg_rewards = {}
-    _, _ = env.reset(roll_back=True)    
+    _, _ = env.reset(roll_back=True)
     policy.model.eval() #Put the model in eval mode to turn off dropout etc.
     policy.model.cpu() #Copy over the model to cpu if on cuda 
     with torch.no_grad(): #Turn off autograd
@@ -202,9 +201,9 @@ class DaggerAgent(Agent):
           raw_input('Press Enter')
         
 
-        test_rewards[env.world_num] = ep_reward
+        test_rewards[env.im_num] = ep_reward
         # print env.im_num
-        test_avg_rewards[env.world_num] = np.mean(test_rewards.values())
+        test_avg_rewards[env.im_num] = np.mean(test_rewards.values())
         # test_rewards.append(ep_reward)
         # test_avg_rewards.append(sum(test_rewards)*1.0/(i+1.0))
         if step: raw_input('Episode over, press enter for next episode')
