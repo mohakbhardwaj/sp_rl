@@ -57,6 +57,7 @@ class HeuristicAgent(Agent):
         feas_actions = self.filter_path(path, obs)
         act_id = self.selector(feas_actions, j+1, self.G)
         act_e = self.env.edge_from_action(act_id)
+        # print feas_actions, act_e
         if render:
           self.render_env(obs, feas_actions, act_id)
         ftrs = self.G.get_features([self.env.edge_from_action(a) for a in feas_actions], j)
@@ -159,8 +160,9 @@ class HeuristicAgent(Agent):
     curr_sp_len = G.curr_shortest_path_len
     scores = np.array([0.0]*len(feas_actions))
     for (j, action) in enumerate(feas_actions):
-      edge = self.env.edge_from_action(action)
-      if self.env.G[edge[0]][edge[1]]['status'] == 0:
+      gt_edge = self.env.gt_edge_from_action(action)
+      edge = (gt_edge.source(), gt_edge.target())
+      if self.env.G.edge_properties['status'][gt_edge] == 0:
         G.update_edge(edge, 0)
         new_sp = G.curr_shortest_path
         new_sp_len = G.curr_shortest_path_len
@@ -175,8 +177,9 @@ class HeuristicAgent(Agent):
     curr_sp_len = G.curr_shortest_path_len
     scores = [0.0]*len(feas_actions)
     for (j, action) in enumerate(feas_actions):
-      edge = self.env.edge_from_action(action)
-      if self.env.G[edge[0]][edge[1]]['status'] == 0:
+      # edge = self.env.edge_from_action(action)
+      gt_edge = env.gt_edge_from_action(action)
+      if env.G.edge_properties['status'][gt_edge] == 0:
         G.update_edge(edge, 0)
         new_sp = G.curr_shortest_path
         new_sp_len = G.curr_shortest_path_len
