@@ -2,18 +2,19 @@
 import os,sys
 sys.path.insert(0, os.path.abspath('..'))
 import operator
+# import matplotlib
+# matplotlib.use('cairo')
 import matplotlib.pyplot as plt
 import numpy as np
 import gym
 import sp_rl
 from sp_rl.agents import HeuristicAgent, Graph
 import json
-
 def main(args):
   env = gym.make(args.env)
   env.seed(args.seed_val)
   np.random.seed(args.seed_val)
-
+# 
   #Parameters
   selector = args.heuristic
   ftr_params = None

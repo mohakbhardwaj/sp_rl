@@ -27,7 +27,7 @@ class GraphEnv2D(gym.Env):
     self.dataset_folder = dataset_folder
     self.mode = mode
     self.file_idxing = file_idxing
-    self.nnodes, self.nedges, self.G, self.adj_mat, self.pos, self.action_to_edge, self.action_to_gt_edge, self.edge_to_action, self.act_to_idx, self.edge_weights, self.vert_pos = self.initialize_graph(dataset_folder) 
+    self.nnodes, self.nedges, self.G, self.adj_mat, self.pos, self.action_to_edge, self.action_to_gt_edge, self.edge_to_action, self.act_to_idx, self.edge_weights, self.vert_pos, self.Gdraw = self.initialize_graph(dataset_folder) 
     self.source_node, self.target_node, self.edge_statuses, self.num_worlds = self.initialize_world_distrib(dataset_folder)#, self.data_idxs)
     self.edge_priors = self.calculate_edge_priors()
     #Randomly shuffle the worlds
@@ -54,12 +54,10 @@ class GraphEnv2D(gym.Env):
 
     nnodes = int(graph_lines[0].split()[1])
     nedges = int(int(graph_lines[1].split()[1]))
-    # print nnodes, nedges
     action_to_edge = {}
     edge_to_action={}
     act_to_idx = {}
     action_to_gt_edge={}
-    # G = nx.Graph()
     G = Graph(directed=False)
     edge_weights = G.new_edge_property("double")
     G.edge_properties['weight'] = edge_weights
@@ -68,7 +66,8 @@ class GraphEnv2D(gym.Env):
     edge_status = G.new_edge_property("int")
     G.edge_properties['status'] = edge_status
     edge_status = -1
-    # print('Reading graph from file')
+    Gdraw = nx.Graph()
+    # print ('Reading graph from file')
     act_num = 0
     for i in xrange(2, len(graph_lines)):
       s = graph_lines[i].split()
@@ -79,6 +78,7 @@ class GraphEnv2D(gym.Env):
       # prior = float(s[4])
       if (pid, cid) not in edge_to_action and (cid, pid) not in edge_to_action:
         e = G.add_edge(pid, cid)
+        Gdraw.add_edge(pid, cid)
         edge_weights[e] = w
         action_to_edge[act_num] = (pid, cid)
         action_to_gt_edge[act_num] = e
@@ -103,7 +103,7 @@ class GraphEnv2D(gym.Env):
       vert_pos[G.vertex(i)] = pos_f
       pos[i] = pos_f
     # raw_input('..')
-    return nnodes, nedges, G, adj_mat, pos, action_to_edge, action_to_gt_edge, edge_to_action, act_to_idx, edge_weights, vert_pos
+    return nnodes, nedges, G, adj_mat, pos, action_to_edge, action_to_gt_edge, edge_to_action, act_to_idx, edge_weights, vert_pos, Gdraw
 
 
   def initialize_world_distrib(self, folder):#, idxs):
@@ -116,27 +116,13 @@ class GraphEnv2D(gym.Env):
     return source_node, target_node, edge_stats, edge_stats.shape[0]#, edge_stats_full
   
   def reinit_graph_status(self, edge_stats):
-    # edge_weight_prop = self.G.edge_properties['weight']
-    # edege_status_prop = self.G.edge_properties['status']
     for a,edge in self.action_to_gt_edge.iteritems():
-      # print a
-      # e = self.G.get_edge(edge[0], edge[1])
       if edge_stats[a] == 0:
         self.G.edge_properties['status'][edge] = 0
-        self.G.edge_properties['weight'][edge] = 0
-
-        # edge_weight_prop[e] = np.inf
-        # edge_status_prop[e] = 0
-
-        # self.G[edge[0]][edge[1]]['status'] = 0
-        # self.G[edge[0]][edge[1]]['weight'] = np.inf
+        self.G.edge_properties['weight'][edge] = np.inf
       elif edge_stats[a] == 1:
-        self.G.edge_properties['status'][edge] = 0
-        self.G.edge_properties['weight'][edge] = 0
-        # edge_weight_prop[e] = 
-        # edge_status_prop[e] = self.adj_mat[edge[0], edge[1]]
-        # self.G[edge[0]][edge[1]]['status'] = 1
-        # self.G[edge[0]][edge[1]]['weight'] = self.adj_mat[edge[0], edge[1]]
+        self.G.edge_properties['status'][edge] = 1
+        self.G.edge_properties['weight'][edge] = self.adj_mat[edge.source(), edge.target()]
       else:
         raise ValueError
   
@@ -155,11 +141,9 @@ class GraphEnv2D(gym.Env):
   def step(self, action):
     done = False
     reward = -1
-    print "Here"
     e = self.action_to_edge[action] #Get edge corresponding to action id
     gt_edge = self.action_to_gt_edge[action]
     result = self.G.edge_properties['status'][gt_edge] #Check edge for validity
-    print result
     self.obs[action] = result #Update the observation
     if self.eval_path(self.sp): #If the agent has discovered the shortest path, episode ends
       done = True
@@ -185,6 +169,7 @@ class GraphEnv2D(gym.Env):
         self.reinit_graph_status(self.curr_edge_stats)
         # self.sp = nx.astar_path(self.G, self.source_node, self.target_node, self.euc_dist, weight='weight') #The environment pre-calculates shortest path
         self.sp, self.sp_edge = shortest_path(self.G, self.G.vertex(self.source_node), self.G.vertex(self.target_node), self.G.edge_properties['weight'])
+        # print self.sp
         if self.path_length(self.sp_edge) < np.inf:
           solvable=True
         # print "Environment is solvable - ",solvable
@@ -196,7 +181,6 @@ class GraphEnv2D(gym.Env):
       # print self.im_num
       # print self.curr_idx, world_num, im_name
       if self.file_idxing == 1: im_name = "world_" + str(self.im_num)
-      # print im_name, world_num
       self.img = np.flipud(plt.imread(os.path.join(self.dataset_folder, "environment_images/"+im_name+".png")))
     if self.render_called:
       plt.close(self.fig)
@@ -208,8 +192,8 @@ class GraphEnv2D(gym.Env):
   def render(self, mode='human', edge_widths={}, edge_colors={}, close=False):
     edge_width_list = []
     edge_color_list = []
-    for edge in self.G.edges():
-      i = self.edge_to_action[(edge.source(), edge.target())]
+    for edge in self.Gdraw.edges():
+      i = self.edge_to_action[edge]
       if i in edge_widths:
         edge_width_list.append(edge_widths[i])
       elif self.obs[i] != -1:
@@ -222,7 +206,6 @@ class GraphEnv2D(gym.Env):
       else:
         edge_color_list.append(self.COLOR[self.obs[i]])
 
-    edges = [self.edge_from_action(a) for a in edge_widths]
     if not self.render_called:
       self.fig, self.ax = plt.subplots()
       self.fig.show()
@@ -230,10 +213,10 @@ class GraphEnv2D(gym.Env):
       self.render_called = True
     self.ax.clear()
     self.ax.imshow(self.img, interpolation='nearest', origin='lower', extent=[0,1,0,1], cmap='gray')
-    graph_draw(self.G, self.G.vp["pos"], mplfig=self.ax)
-    # nx.draw_networkx_edges(self.G, self.pos, ax=self.ax, edge_color=edge_color_list, width=edge_width_list, alpha=0.4)
-    # nx.draw_networkx_nodes(self.G, self.pos, ax=self.ax, nodelist=[self.source_node, self.target_node], node_color=['b', 'g'], node_size=20)
+    nx.draw_networkx_edges(self.Gdraw, self.pos, ax=self.ax, edge_color=edge_color_list, width=edge_width_list, alpha=0.4)
+    nx.draw_networkx_nodes(self.Gdraw, self.pos, ax=self.ax, nodelist=[self.source_node, self.target_node], node_color=['b', 'g'], node_size=20)
     self.fig.canvas.draw()
+    # graph_draw(self.G, self.G.vp["pos"])
 
   def seed(self, seed=None):
     np.random.seed(seed)
@@ -250,6 +233,9 @@ class GraphEnv2D(gym.Env):
   
   def edge_from_action(self, action):
     return self.action_to_edge[action]
+
+  def gt_edge_from_action(self, action):
+    return self.action_to_gt_edge[action]
 
   def action_from_edge(self, edge):
     return self.edge_to_action[edge]

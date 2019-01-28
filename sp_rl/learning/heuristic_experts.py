@@ -52,8 +52,8 @@ def length_oracle(feas_actions, itr, env, G, horizon=2):
   scores = [0.0]*len(feas_actions)
   
   for (j, action) in enumerate(feas_actions):
-    edge = env.edge_from_action(action)
-    if env.G[edge[0]][edge[1]]['status'] == 0:
+    gt_edge = env.gt_edge_from_action(action)
+    if env.G.edge_properties['status'][gt_edge] == 0:
       G.update_edge(edge, 0)
       new_sp = G.curr_shortest_path
       new_sp_len = G.curr_shortest_path_len

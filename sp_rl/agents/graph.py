@@ -2,6 +2,7 @@
 """Weighted graph class that agent uses to represent the problem and calculate features"""
 
 import networkx as nx
+from graph_tool.all import *
 import numpy as np
 from itertools import islice
 import time
