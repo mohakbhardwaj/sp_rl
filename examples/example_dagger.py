@@ -132,12 +132,13 @@ def main(args):
       fig1.savefig(args.folder + 'train_results')
       plt.show(block=False)
 
-    test_env = gym.make(args.valid_env)
-    test_env.seed(args.seed_val)
-    _, _ = test_env.reset()
+    # test_env = gym.make(args.valid_env)
+    # test_env.seed(args.seed_val)
+    # _, _ = test_env.reset()
+    _,_ = valid_env.reset(roll_back=True)
     if model == "linear":
       print('Learned weights = {}'.format(agent.policy.model.state_dict()))
-    test_rewards_dict, test_avg_rewards_dict = agent.test(test_env, agent.policy, args.num_test_episodes, render=args.render, step=args.step)
+    test_rewards_dict, test_avg_rewards_dict = agent.test(valid_env, agent.policy, args.num_test_episodes, render=args.render, step=args.step)
 
   else:
     print args.test
