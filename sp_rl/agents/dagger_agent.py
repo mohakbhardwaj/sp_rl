@@ -56,51 +56,52 @@ class DaggerAgent(Agent):
       #Evaluate every policy for k episodes
       policy_curr.model.eval()
       policy_curr.model.cpu()
-      for k in xrange(num_eval_episodes):
-        j = 0
-        ep_reward = 0
-        obs, _ = self.train_env.reset()
-        self.G.reset()
-        path = self.get_path(self.G)
-        ftrs = torch.tensor(self.G.get_features([self.train_env.edge_from_action(a) for a in path], j))
-        probs = policy_curr.predict(ftrs)
-        probs = probs.detach().numpy()
-        if render:
-          self.render_env(self.train_env, path, probs)
-        done = False
-
-        while not done:
-          print('Current iteration = {}, Iter episode = {}, Timestep = {}, beta = {}, Best reward yet = {}'.format(i+1, k+1, j, beta, best_valid_reward))
+      with torch.no_grad():
+        for k in xrange(num_eval_episodes):
+          j = 0
+          ep_reward = 0
+          obs, _ = self.train_env.reset()
+          self.G.reset()
           path = self.get_path(self.G)
-          feas_actions = self.filter_path(path, obs) #Only select from unevaluated edges in shortest path
-          ftrs = torch.tensor(self.G.get_features([self.train_env.edge_from_action(a) for a in feas_actions], j))
-          probs = policy_curr.predict(ftrs)  
-          #Do random tie breaking
+          ftrs = torch.tensor(self.G.get_features([self.train_env.edge_from_action(a) for a in path], j))
+          probs = policy_curr.predict(ftrs)
           probs = probs.detach().numpy()
-          # print feas_actions, probs, ftrs
-          idx_l = np.random.choice(np.flatnonzero(probs==probs.max())) #random tie breaking
-          idx_exp = self.expert(feas_actions, j, self.train_env, self.G)
-          if heuristic is not None: idx_heuristic = self.EXPERTS[heuristic](feas_actions, j, self.train_env, self.G) 
-          else: idx_heuristic = idx_exp
-          #Aggregate the data
-          D.push(ftrs, torch.tensor([idx_exp]))
-          #Execute mixture
-          if np.random.sample() > beta:
-            idx = idx_l 
-            # print('Learner action')
-          else:
-            idx = idx_heuristic
-            # print('Expert action')
-          act_id = feas_actions[idx]
-          act_e = self.train_env.edge_from_action(act_id)
-          # print ('Q_vals = {}, feasible_actions = {}, chosen edge = {}, features = {}'.format(q_vals, feas_actions, act_e, ftrs))
-          obs,reward, done, info = self.train_env.step(act_id)
-          self.G.update_edge(act_e, obs[act_id]) #Update agent's internal graph          
-          j += 1
-          ep_reward += reward
+          if render:
+            self.render_env(self.train_env, path, probs)
+          done = False
+
+          while not done:
+            print('Current iteration = {}, Iter episode = {}, Timestep = {}, beta = {}, Best reward yet = {}'.format(i+1, k+1, j, beta, best_valid_reward))
+            path = self.get_path(self.G)
+            feas_actions = self.filter_path(path, obs) #Only select from unevaluated edges in shortest path
+            ftrs = torch.tensor(self.G.get_features([self.train_env.edge_from_action(a) for a in feas_actions], j))
+            probs = policy_curr.predict(ftrs)  
+            #Do random tie breaking
+            probs = probs.detach().numpy()
+            # print feas_actions, probs, ftrs
+            idx_l = np.random.choice(np.flatnonzero(probs==probs.max())) #random tie breaking
+            idx_exp = self.expert(feas_actions, j, self.train_env, self.G)
+            if heuristic is not None: idx_heuristic = self.EXPERTS[heuristic](feas_actions, j, self.train_env, self.G) 
+            else: idx_heuristic = idx_exp
+            #Aggregate the data
+            D.push(ftrs, torch.tensor([idx_exp]))
+            #Execute mixture
+            if np.random.sample() > beta:
+              idx = idx_l 
+              # print('Learner action')
+            else:
+              idx = idx_heuristic
+              # print('Expert action')
+            act_id = feas_actions[idx]
+            act_e = self.train_env.edge_from_action(act_id)
+            # print ('Q_vals = {}, feasible_actions = {}, chosen edge = {}, features = {}'.format(q_vals, feas_actions, act_e, ftrs))
+            obs,reward, done, info = self.train_env.step(act_id)
+            self.G.update_edge(act_e, obs[act_id]) #Update agent's internal graph          
+            j += 1
+            ep_reward += reward
           
-        train_rewards.append(ep_reward)
-        train_avg_rewards.append(sum(train_rewards)*1.0/(i*num_eval_episodes + k +1.0))      
+          train_rewards.append(ep_reward)
+          train_avg_rewards.append(sum(train_rewards)*1.0/(i*num_eval_episodes + k +1.0))      
       
       #re-initialize policy and train
       if re_init:
@@ -131,14 +132,14 @@ class DaggerAgent(Agent):
         median_reward = np.median(valid_rewards)
         reward_std = np.std(valid_rewards)
       # print ('Iteration = {}, training loss = {}, average_validation_reward = {}'.format(i+1, curr_train_loss, valid_avg_rewards[-1]))
-        if median >= best_valid_reward:
+        if median_reward >= best_valid_reward:
           # print('Best policy yet, saving')
           self.policy = deepcopy(policy_curr)
-          best_valid_reward = median
+          best_valid_reward = median_reward
 
       # print 'Average validation reward = {}, std = {}, best reward yet = {}'.format(median, reward_std, best_valid_reward)      
       # raw_input('...')
-      validation_reward.append(median)
+      validation_reward.append(median_reward)
       validation_std.append(reward_std)
       validation_avg_reward.append(sum(validation_reward)*1.0/(i+1.0))
       train_loss.append(curr_train_loss)
