@@ -53,7 +53,7 @@ def main(args):
     model = LinearNet(G.num_features, 1)
     optim_method = 'sgd'
   elif args.model == 'mlp': 
-    model = MLP(d_input=G.num_features, d_layers=[30, 20], d_output=1, activation=torch.nn.ReLU)
+    model = MLP(d_input=G.num_features, d_layers=[100, 50], d_output=1, activation=torch.nn.ReLU)
     optim_method = 'adam'
   # print('Function approximation model = {}'.format(model))
   policy = Policy(model, batch_size, train_method='supervised', optim_method=optim_method, lr=alpha, weight_decay=weight_decay, use_cuda=args.use_cuda)
