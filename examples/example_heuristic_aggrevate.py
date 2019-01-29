@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import gym
 import sp_rl
-from sp_rl.agents import AggrevateAgent, Graph
+from sp_rl.agents import AggrevateAgent, GraphWrapper
 from sp_rl.learning import LinearNet, MLP, QFunction
 
 torch.set_default_tensor_type(torch.DoubleTensor)
@@ -49,7 +49,7 @@ def main(args):
   T = params['T'] #Episode length for sampling oracle
   
   #Step 3: Create graph that the learner will use for path/feature calculation
-  G = Graph(graph_info['adj_mat'], graph_info['source_node'], graph_info['target_node'], ftr_params=dict(k=k), pos=graph_info['pos'], edge_priors=graph_info['edge_priors'], lite_ftrs=args.lite_ftrs)
+  G = GraphWrapper(graph_info['adj_mat'], graph_info['source_node'], graph_info['target_node'], ftr_params=dict(k=k), pos=graph_info['pos'], edge_priors=graph_info['edge_priors'], lite_ftrs=args.lite_ftrs)
   #Step 4: Create function approximation model
   if args.model == 'linear': 
     model = LinearNet(G.num_features, 1)

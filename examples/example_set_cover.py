@@ -6,7 +6,7 @@ import numpy as np
 import gym
 import sp_rl
 from sp_rl.learning import SetCoverOracle
-from sp_rl.agents import Graph
+from sp_rl.agents import GraphWrapper
 import time
 
 def main(args):
@@ -23,7 +23,7 @@ def main(args):
 
   for i in xrange(args.num_episodes):
     print "Episode = %d"%i
-    G = Graph(graph_info['adj_mat'], graph_info['source_node'], graph_info['target_node'], pos=graph_info['pos'], edge_priors=graph_info['edge_priors'], lite_ftrs=True)
+    G = GraphWrapper(graph_info['adj_mat'], graph_info['source_node'], graph_info['target_node'], pos=graph_info['pos'], edge_priors=graph_info['edge_priors'], lite_ftrs=True)
     obs, _ = env.reset()
     oracle = SetCoverOracle(env, G, args.horizon)#, k)
     value, time_taken = oracle.rollout_oracle(obs, render=args.render, step=args.step)

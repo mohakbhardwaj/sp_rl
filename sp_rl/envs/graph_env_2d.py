@@ -67,7 +67,7 @@ class GraphEnv2D(gym.Env):
     G.edge_properties['status'] = edge_status
     edge_status = -1
     Gdraw = nx.Graph()
-    # print ('Reading graph from file')
+    print ('Reading graph from file')
     act_num = 0
     for i in xrange(2, len(graph_lines)):
       s = graph_lines[i].split()
@@ -122,7 +122,7 @@ class GraphEnv2D(gym.Env):
         self.G.edge_properties['weight'][edge] = np.inf
       elif edge_stats[a] == 1:
         self.G.edge_properties['status'][edge] = 1
-        self.G.edge_properties['weight'][edge] = self.adj_mat[edge.source(), edge.target()]
+        self.G.edge_properties['weight'][edge] = self.adj_mat[int(edge.source()), int(edge.target())]
       else:
         raise ValueError
   
@@ -156,7 +156,7 @@ class GraphEnv2D(gym.Env):
     if roll_back:
       self.curr_idx = 0
       self.first_reset=True
-
+  
     #Sample worlds till you sample a solvable one
     solvable = False
     if not self.first_reset:

@@ -5,7 +5,7 @@ import gym
 import sp_rl
 import networkx as nx
 from agent import Agent
-from graph import Graph
+from graph_wrapper import GraphWrapper
 
 class QTableAgent(Agent):
   def __init__(self, env, eps0, gamma, alpha):

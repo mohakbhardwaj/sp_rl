@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 import operator
 import os
-# import random
+import scipy
 import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
 import matplotlib.pyplot as plt
 import numpy as np
-import networkx as nx
+from graph_tool.all import *
 from ndgrid import NDGrid
-from sp_rl.utils.math_utils import euc_dist
+
 
 class GraphEnvHerb(gym.Env):
   metadata = {'render.modes': ['human'],
@@ -26,7 +26,7 @@ class GraphEnvHerb(gym.Env):
     self.dataset_folder = dataset_folder
     self.mode = mode
     self.file_idxing = file_idxing
-    self.nnodes, self.nedges, self.G, self.adj_mat, self.action_to_edge, self.edge_to_action, self.act_to_idx = self.initialize_graph(dataset_folder) 
+    self.nnodes, self.nedges, self.G, self.adj_mat, self.action_to_edge, self.action_to_gt_edge, self.edge_to_action, self.act_to_idx, self.edge_weights = self.initialize_graph(dataset_folder) 
     self.source_node, self.target_node, self.edge_statuses, self.num_worlds = self.initialize_world_distrib(dataset_folder)#, self.data_idxs)
     self.edge_priors = self.calculate_edge_priors()
     #Randomly shuffle the worlds
@@ -43,22 +43,25 @@ class GraphEnvHerb(gym.Env):
     self.action_space = spaces.Discrete(self.nedges)    
     self.observation_space = spaces.Discrete(3**self.nedges)
     self.grid = NDGrid(self.nedges, [3]*self.nedges)
-    self.render_called = False
+    # self.render_called = False
 
   def initialize_graph(self, folder):
     with open(os.path.join(folder, "graph.txt")) as f:
       graph_lines = f.read().splitlines()
-    # with open(os.path.join(folder, "coord_set.dat")) as f:
-    #   pos_lines = f.read().splitlines()
 
     nnodes = int(graph_lines[0].split()[1])
     nedges = int(int(graph_lines[1].split()[1]))
-    # print nnodes, nedges
     action_to_edge = {}
     edge_to_action={}
     act_to_idx = {}
-    G = nx.Graph()
-    # print('Reading graph from file')
+    action_to_gt_edge={}
+    G = Graph(directed=False)
+    edge_weights = G.new_edge_property("double")
+    G.edge_properties['weight'] = edge_weights
+    edge_status = G.new_edge_property("int")
+    G.edge_properties['status'] = edge_status
+    edge_status = -1
+    print ('Reading graph from file')
     act_num = 0
     for i in xrange(2, len(graph_lines)):
       s = graph_lines[i].split()
@@ -66,31 +69,17 @@ class GraphEnvHerb(gym.Env):
       pid = int(s[1]) - 1 #parent node
       cid = int(s[2]) - 1 #child node
       w = float(s[3])     #edge weight
-      # prior = float(s[4])
       if (pid, cid) not in edge_to_action and (cid, pid) not in edge_to_action:
-        G.add_edge(pid, cid, weight=w)
+        e = G.add_edge(pid, cid)
+        edge_weights[e] = w
         action_to_edge[act_num] = (pid, cid)
+        action_to_gt_edge[act_num] = e
         edge_to_action[(cid, pid)] = act_num
         edge_to_action[(pid, cid)] = act_num
         act_to_idx[act_num] = eid
         act_num += 1
-
-        # idxs.append(eid)
-    # print len(G.edges())
-    # print len(G.nodes())
-    # for a, edge in action_to_edge.iteritems():
-      # print a
-    adj_mat = nx.to_numpy_matrix(G)
-    # print('Assigning coordinate positions to nodes')
-    # pos = {}
-    # for i in xrange(len(pos_lines)):
-    #   # print i
-    #   s = pos_lines[i].split(',')
-    #   pos_f = (float(s[0]), float(s[1]))
-    #   G.node[i]['pos'] = pos_f
-    #   pos[i] = pos_f
-    # raw_input('..')
-    return nnodes, nedges, G, adj_mat, action_to_edge, edge_to_action, act_to_idx
+    adj_mat = adjacency(G, edge_weights).todense()
+    return nnodes, nedges, G, adj_mat, action_to_edge, action_to_gt_edge, edge_to_action, act_to_idx, edge_weights
 
 
   def initialize_world_distrib(self, folder):#, idxs):
@@ -100,34 +89,37 @@ class GraphEnvHerb(gym.Env):
     edge_stats = edge_stats[:, list(self.act_to_idx.values())]
     with open(os.path.join(folder, "start_idx.dat")) as f: source_node = int(f.read().splitlines()[0].split()[0]) - 1
     with open(os.path.join(folder, "goal_idx.dat")) as f: target_node = int(f.read().splitlines()[0].split()[0]) - 1
-    return source_node, target_node, edge_stats, edge_stats.shape[0]#, edge_stats_full
+    return source_node, target_node, edge_stats, edge_stats.shape[0]
   
   def reinit_graph_status(self, edge_stats):
-    for a,edge in self.action_to_edge.iteritems():
-      # print a
+    for a,edge in self.action_to_gt_edge.iteritems():
       if edge_stats[a] == 0:
-        self.G[edge[0]][edge[1]]['status'] = 0
-        self.G[edge[0]][edge[1]]['weight'] = np.inf
+        self.G.edge_properties['status'][edge] = 0
+        self.G.edge_properties['weight'][edge] = np.inf
       elif edge_stats[a] == 1:
-        self.G[edge[0]][edge[1]]['status'] = 1
-        self.G[edge[0]][edge[1]]['weight'] = self.adj_mat[edge[0], edge[1]]
+        self.G.edge_properties['status'][edge] = 1
+        self.G.edge_properties['weight'][edge] = self.adj_mat[int(edge.source()), int(edge.target())]
       else:
         raise ValueError
   
   def calculate_edge_priors(self):
     edge_priors = {}
     train_only = self.edge_statuses[0:self.metadata['max_train_envs'], :]
+    # print 
     prior_vec =  np.mean(train_only, axis=0)
     for a,edge in self.action_to_edge.iteritems():
+      # print a
       edge_priors[(edge[0], edge[1])] = prior_vec[a]
       edge_priors[(edge[1], edge[0])] = prior_vec[a]
+
     return edge_priors
   
   def step(self, action):
     done = False
     reward = -1
     e = self.action_to_edge[action] #Get edge corresponding to action id
-    result = self.G[e[0]][e[1]]['status'] #Check edge for validity
+    gt_edge = self.action_to_gt_edge[action]
+    result = self.G.edge_properties['status'][gt_edge] #Check edge for validity
     self.obs[action] = result #Update the observation
     if self.eval_path(self.sp): #If the agent has discovered the shortest path, episode ends
       done = True
@@ -135,73 +127,44 @@ class GraphEnvHerb(gym.Env):
     info = {} #Side information
     return self.obs, reward, done, info
 
-  def reset(self):
+  def reset(self, roll_back=False):
     self.obs = [-1]*self.nedges
+    if roll_back:
+      self.curr_idx = 0
+      self.first_reset=True
+
     #Sample worlds till you sample a solvable one
     solvable = False
     if not self.first_reset:
       while not solvable:
         self.world_num = self.world_arr[self.curr_idx]
+        # print self.curr_idx
+        # self.world_num = 17
         self.curr_idx = (self.curr_idx + 1) % self.max_envs
         self.curr_edge_stats = self.edge_statuses[self.world_num-self.file_idxing, :] #Sample a random world from the dataset
         self.reinit_graph_status(self.curr_edge_stats)
-        if nx.shortest_path_length(self.G, self.source_node, self.target_node, weight='weight') < np.inf:
-          self.sp = nx.shortest_path(self.G, self.source_node, self.target_node, weight='weight') #The environment pre-calculates shortest path
+        self.sp, self.sp_edge = shortest_path(self.G, self.G.vertex(self.source_node), self.G.vertex(self.target_node), self.G.edge_properties['weight'])
+        if self.path_length(self.sp_edge) < np.inf:
           solvable=True
         # print "Environment is solvable - ",solvable
-        # print self.sp
-      self.sp_edge = self.to_edge_path(self.sp)
-      # self.im_num =  world_num
-      # print self.im_num
-      # im_name = str(self.im_num)
-      # print self.im_num
-      # print self.curr_idx, world_num, im_name
-      # if self.file_idxing == 1: im_name = "world_" + str(self.im_num)
-      # print im_name, world_num
-      # self.img = np.flipud(plt.imread(os.path.join(self.dataset_folder, "environment_images/"+im_name+".png")))
-    if self.render_called:
-      plt.close(self.fig)
-      self.render_called = False
-    graph_info = {'adj_mat':self.adj_mat, 'edge_priors':self.edge_priors, 'source_node':self.source_node, 'target_node':self.target_node}
+    # if self.render_called:
+    #   plt.close(self.fig)
+    #   self.render_called = False
+    graph_info = {'adj_mat':self.adj_mat, 'pos': None, 'edge_priors':self.edge_priors, 'source_node':self.source_node, 'target_node':self.target_node}
     self.first_reset = False
     return self.obs,  graph_info
   
   def render(self, mode='human', edge_widths={}, edge_colors={}, close=False):
-    edge_width_list = []
-    edge_color_list = []
-    for edge in self.G.edges():
-      i = self.edge_to_action[edge]
-      if i in edge_widths:
-        edge_width_list.append(edge_widths[i])
-      elif self.obs[i] != -1:
-        edge_width_list.append(2.0)
-      else:
-        edge_width_list.append(1.0)
-
-      if i in edge_colors and self.obs[i] == -1:
-        edge_color_list.append(edge_colors[i])
-      else:
-        edge_color_list.append(self.COLOR[self.obs[i]])
-
-    edges = [self.edge_from_action(a) for a in edge_widths]
-    if not self.render_called:
-      self.fig, self.ax = plt.subplots()
-      self.fig.show()
-      self.fig.canvas.draw()
-      self.render_called = True
-    self.ax.clear()
-    # self.ax.imshow(self.img, interpolation='nearest', origin='lower', extent=[0,1,0,1], cmap='gray')
-    nx.draw_networkx_edges(self.G, pos=nx.spring_layout(self.G), ax=self.ax, edge_color=edge_color_list, width=edge_width_list, alpha=0.4)
-    nx.draw_networkx_nodes(self.G, pos=nx.spring_layout(self.G), ax=self.ax, nodelist=[self.source_node, self.target_node], node_color=['b', 'g'], node_size=20)
-    self.fig.canvas.draw()
+    print('no rendering for Herb environment yet')
+    return None
 
   def seed(self, seed=None):
     np.random.seed(seed)
 
-  def close(self):
-    if self.render_called:
-      plt.close(self.fig)
-      self.render_called = False
+  # def close(self):
+  #   if self.render_called:
+  #     plt.close(self.fig)
+  #     self.render_called = False
     
   def eval_path(self, path):
     path_edges = self.to_edge_path(path)
@@ -210,6 +173,9 @@ class GraphEnvHerb(gym.Env):
   
   def edge_from_action(self, action):
     return self.action_to_edge[action]
+
+  def gt_edge_from_action(self, action):
+    return self.action_to_gt_edge[action]
 
   def action_from_edge(self, edge):
     return self.edge_to_action[edge]
@@ -234,3 +200,9 @@ class GraphEnvHerb(gym.Env):
   #   pos1 = np.array(self.G.node[node1]['pos'])
   #   pos2 = np.array(self.G.node[node2]['pos'])
   #   return np.linalg.norm(pos1 - pos2)
+
+  def path_length(self, path):
+    w = 0.0
+    for edge in path:
+      w = w + self.G.edge_properties['weight'][edge]
+    return w

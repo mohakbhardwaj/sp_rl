@@ -5,4 +5,4 @@ from heuristic_selector_agent import HeuristicAgent
 from linear_q_agent import LinearQAgent
 from aggrevate_agent import AggrevateAgent
 from dagger_agent import DaggerAgent
-from graph import Graph
+from graph_wrapper import GraphWrapper

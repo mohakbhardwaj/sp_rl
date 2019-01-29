@@ -6,7 +6,6 @@ import torch
 import sp_rl
 import networkx as nx
 from agent import Agent
-from graph import Graph
 from sp_rl.learning import LinearQFunction, ExperienceBuffer
 
 class LinearQAgent(Agent):

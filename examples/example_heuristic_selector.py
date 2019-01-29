@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import gym
 import sp_rl
-from sp_rl.agents import HeuristicAgent, Graph
+from sp_rl.agents import HeuristicAgent
 import json
 def main(args):
   env = gym.make(args.env)
@@ -18,7 +18,7 @@ def main(args):
   #Parameters
   selector = args.heuristic
   ftr_params = None
-  lite_ftrs = False
+  lite_ftrs = True
   if selector in ["select_k_shortest", "select_priorkshortest", "select_lookahead"]:
     ftr_params = dict(k=args.k)
     lite_ftrs = False

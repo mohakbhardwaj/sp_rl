@@ -10,7 +10,7 @@ import numpy as np
 import time
 import torch
 import sp_rl
-from sp_rl.agents import DaggerAgent, Graph
+from sp_rl.agents import DaggerAgent, GraphWrapper
 from sp_rl.learning import LinearNet, MLP, Policy
 
 torch.set_default_tensor_type(torch.DoubleTensor)
@@ -48,7 +48,7 @@ def main(args):
   train_epochs = args.epochs 
   weight_decay = args.weight_decay #L2 penalty
   
-  G = Graph(graph_info['adj_mat'], graph_info['source_node'], graph_info['target_node'], ftr_params=dict(k=k), pos=graph_info['pos'], edge_priors=graph_info['edge_priors'], lite_ftrs=args.lite_ftrs)
+  G = GraphWrapper(graph_info['adj_mat'], graph_info['source_node'], graph_info['target_node'], ftr_params=dict(k=k), pos=graph_info['pos'], edge_priors=graph_info['edge_priors'], lite_ftrs=args.lite_ftrs)
   if args.model == 'linear': 
     model = LinearNet(G.num_features, 1)
     optim_method = 'sgd'

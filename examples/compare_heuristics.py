@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import gym
 import sp_rl
-from sp_rl.agents import Graph
+from sp_rl.agents import GraphWrapper
 import json
 
 
@@ -87,8 +87,8 @@ def main(args):
   _, graph_info1 = env1.reset()
   _, graph_info2 = env2.reset()
   ftr_params=None
-  G1 = Graph(graph_info1['adj_mat'], graph_info1['source_node'], graph_info1['target_node'], ftr_params=ftr_params, pos=graph_info1['pos'], edge_priors=graph_info1['edge_priors'], lite_ftrs=True)
-  G2 = Graph(graph_info2['adj_mat'], graph_info2['source_node'], graph_info2['target_node'], ftr_params=ftr_params, pos=graph_info2['pos'], edge_priors=graph_info2['edge_priors'], lite_ftrs=True)
+  G1 = GraphWrapper(graph_info1['adj_mat'], graph_info1['source_node'], graph_info1['target_node'], ftr_params=ftr_params, pos=graph_info1['pos'], edge_priors=graph_info1['edge_priors'], lite_ftrs=True)
+  G2 = GraphWrapper(graph_info2['adj_mat'], graph_info2['source_node'], graph_info2['target_node'], ftr_params=ftr_params, pos=graph_info2['pos'], edge_priors=graph_info2['edge_priors'], lite_ftrs=True)
 
   
   obs1, _ = env1.reset()

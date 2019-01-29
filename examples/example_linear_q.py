@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import gym
 import sp_rl
-from sp_rl.agents import LinearQAgent, Graph
+from sp_rl.agents import LinearQAgent, GraphWrapper
 
 
 def main(args):
@@ -27,7 +27,7 @@ def main(args):
   alpha = 0.01
   k = 300 #Dataset 1
   # k = 350
-  G = Graph(graph_info['adj_mat'], graph_info['source_node'], graph_info['target_node'], ftr_params=dict(k=k), pos=graph_info['pos'], edge_priors=graph_info['edge_priors'])
+  G = GraphWrapper(graph_info['adj_mat'], graph_info['source_node'], graph_info['target_node'], ftr_params=dict(k=k), pos=graph_info['pos'], edge_priors=graph_info['edge_priors'])
   w_init = np.ones((G.num_features, 1), dtype=np.float32)
   # w_init[3] = 100
   b_init = 0

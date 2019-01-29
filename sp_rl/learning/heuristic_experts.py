@@ -2,11 +2,9 @@ import numpy as np
 
 
 def select_forward(feas_actions, itr, env, G):
-  print "Herer"
   return 0
 
 def select_backward(feas_actions, itr, env, G):
-  print "Tehn herre"
   return len(feas_actions) - 1
 
 def select_alternate(feas_actions, itr, env, G):
@@ -17,7 +15,6 @@ def select_alternate(feas_actions, itr, env, G):
 
 def select_prior(feas_actions, itr, env, G):
   "Choose the edge most likely to be in collision"
-  print "Now herrrr"
   edges = list(map(env.edge_from_action, feas_actions))
   priors = G.get_priors(edges)
   return np.argmax(priors)
@@ -43,21 +40,19 @@ def select_lookahead(feas_actions, itr, env, G):
           scores[j] += 1
     else:
       continue
-  # print scores
   return np.argmax(scores)
 
-def length_oracle(feas_actions, itr, env, G, horizon=2):
+def length_oracle(self, feas_actions, iter, env, G):
   curr_sp = G.curr_shortest_path
   curr_sp_len = G.curr_shortest_path_len
-  scores = [0.0]*len(feas_actions)
-  
+  scores = np.array([0.0]*len(feas_actions))
   for (j, action) in enumerate(feas_actions):
     gt_edge = env.gt_edge_from_action(action)
+    edge = (gt_edge.source(), gt_edge.target())
     if env.G.edge_properties['status'][gt_edge] == 0:
       G.update_edge(edge, 0)
       new_sp = G.curr_shortest_path
       new_sp_len = G.curr_shortest_path_len
       scores[j] = scores[j] + (new_sp_len-curr_sp_len)
       G.update_edge(edge, -1)
-
   return np.argmax(scores)

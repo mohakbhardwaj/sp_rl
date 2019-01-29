@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-baselines=('select_forward' 'select_backward' 'select_alternate' 'select_prior' 'length_oracle')
 envs=('graphEnvHerbValidation-v1' 'graphEnvHerbValidation-v2' 'graphEnvHerbValidation-v3' 'graphEnvHerbValidation-v4' 'graphEnvHerbValidation-v5')
 
 
@@ -9,21 +8,19 @@ folders=(${base_folder}'dataset_herb_1/lsp_selectors' ${base_folder}'dataset_her
          # ${base_folder}'dataset_2d_8/lsp_selectors')
 
 
-num_episodes=200
+run_idxs=(0 1 2 3 4)
+
+num_episodes=30
 seed_val=0
-
-
 
 
 echo `pwd`
 cd ../examples
 echo `pwd`
 
-for base in ${baselines[@]}; do
-  for((i=0;i<${#envs[@]};++i)); do
-  echo "=== Baseline ${base}, Environment ${envs[i]} ==="
-  python example_heuristic_selector.py --env ${envs[i]} --heuristic ${base} --num_episodes ${num_episodes} --folder ${folders[i]} --seed_val ${seed_val}
-  done
+for ((i=0;i<${#run_idxs[@]};++i)); do
+  idx=run_idxs[i]
+  echo "=== Environment ${envs[idx]} ==="
+  python example_run_all_baselines.py --env ${envs[idx]} --num_episodes ${num_episodes} --folder ${folders[idx]} --seed_val ${seed_val}
+
 done
-
-

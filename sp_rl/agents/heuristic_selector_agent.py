@@ -5,7 +5,7 @@ import gym
 import sp_rl
 import networkx as nx
 from agent import Agent
-from graph import Graph
+from graph_wrapper import GraphWrapper
 import time
 
 class HeuristicAgent(Agent):
@@ -24,13 +24,13 @@ class HeuristicAgent(Agent):
 
 
     self.selector = self.SELECTORS[selector_str]
-    _, self.graph_info = self.env.reset()
+    _, self.graph_info = self.env.reset(roll_back=True)
     self.ftr_params = ftr_params
     if 'pos' in self.graph_info:
       node_pos = self.graph_info['pos']
     else:
       node_pos = None
-    self.G = Graph(self.graph_info['adj_mat'], self.graph_info['source_node'], self.graph_info['target_node'], ftr_params=ftr_params, pos=node_pos, edge_priors=self.graph_info['edge_priors'], lite_ftrs=lite_ftrs)
+    self.G = GraphWrapper(self.graph_info['adj_mat'], self.graph_info['source_node'], self.graph_info['target_node'], ftr_params=ftr_params, pos=node_pos, edge_priors=self.graph_info['edge_priors'], lite_ftrs=lite_ftrs)
 
 
   def train(self, num_episodes, render=False, step=False):
@@ -41,7 +41,6 @@ class HeuristicAgent(Agent):
     start_t = time.time()
     test_rewards = {}
     test_avg_rewards = {}
-    avg_time_taken = 0.0
     j = 0
     for i in range(num_episodes):
       obs, _ = self.env.reset()
@@ -54,13 +53,17 @@ class HeuristicAgent(Agent):
       done = False
       while not done:
         path = self.get_path(self.G)
+        # print"curr"
+        # for v in self.G.curr_sp: print(v)
+        # print "env"
+        # for v in self.env.sp: 
+        #   print v
         feas_actions = self.filter_path(path, obs)
         act_id = self.selector(feas_actions, j+1, self.G)
         act_e = self.env.edge_from_action(act_id)
-        # print feas_actions, act_e
         if render:
           self.render_env(obs, feas_actions, act_id)
-        ftrs = self.G.get_features([self.env.edge_from_action(a) for a in feas_actions], j)
+        # ftrs = self.G.get_features([self.env.edge_from_action(a) for a in feas_actions], j)
         # print ftrs
         # print('feasible actions = {}, chosen edge = {}, edge_features = {}'.format(feas_actions, [act_id, act_e], ftrs))
         if step: raw_input('Press enter to execute action')
@@ -71,7 +74,6 @@ class HeuristicAgent(Agent):
         self.G.update_edge(act_e, obs[act_id])#Update the edge weight according to the result
         ep_reward += reward
         j += 1
-        avg_time_taken = time.time() - start_t
 
       #Render environment one last time
       if render:
@@ -82,6 +84,7 @@ class HeuristicAgent(Agent):
       test_avg_rewards[self.env.world_num] = np.mean(test_rewards.values())
       if step: raw_input('Episode over, press enter for next episode')
     
+    avg_time_taken = time.time() - start_t
     avg_time_taken = avg_time_taken/num_episodes*1.0
     
     return test_rewards, test_avg_rewards, avg_time_taken
@@ -171,7 +174,7 @@ class HeuristicAgent(Agent):
     action = feas_actions[np.argmax(scores)]
     return action
 
-  def get_score(self, feas_actions, iter, G, horizon=2):
+  def get_score(self, feas_actions, iter, G):
     curr_sp = G.curr_shortest_path
     print(G.in_edge_form(curr_sp))
     curr_sp_len = G.curr_shortest_path_len
