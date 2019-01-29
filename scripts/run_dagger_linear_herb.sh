@@ -8,7 +8,7 @@ base_folder='../../rss_sp_rl/experiments/graph_collision_checking_datasets/'
 folders=(${base_folder}'dataset_herb_1/dagger_linear_full' ${base_folder}'dataset_herb_2/dagger_linear_full' ${base_folder}'dataset_herb_3/dagger_linear_full'\
          ${base_folder}'dataset_herb_4/dagger_linear_full' ${base_folder}'dataset_herb_5/dagger_linear_full')
 
-run_idxs=(0 1 2 3 4)
+run_idxs=(3 4)
 
 printf "Changing directories"
 echo `pwd`

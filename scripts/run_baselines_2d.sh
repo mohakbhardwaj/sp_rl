@@ -10,7 +10,7 @@ folders=(${base_folder}'dataset_2d_1/lsp_selectors' ${base_folder}'dataset_2d_2/
 
 run_idxs=(1 2 3 5 6)
 
-num_episodes=200
+num_episodes=100
 seed_val=0
 
 

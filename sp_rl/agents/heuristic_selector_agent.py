@@ -53,11 +53,6 @@ class HeuristicAgent(Agent):
       done = False
       while not done:
         path = self.get_path(self.G)
-        # print"curr"
-        # for v in self.G.curr_sp: print(v)
-        # print "env"
-        # for v in self.env.sp: 
-        #   print v
         feas_actions = self.filter_path(path, obs)
         act_id = self.selector(feas_actions, j+1, self.G)
         act_e = self.env.edge_from_action(act_id)
@@ -74,7 +69,6 @@ class HeuristicAgent(Agent):
         self.G.update_edge(act_e, obs[act_id])#Update the edge weight according to the result
         ep_reward += reward
         j += 1
-
       #Render environment one last time
       if render:
         self.render_env(obs, path)
@@ -170,7 +164,7 @@ class HeuristicAgent(Agent):
         new_sp = G.curr_shortest_path
         new_sp_len = G.curr_shortest_path_len
         scores[j] = scores[j] + (new_sp_len-curr_sp_len)
-        G.update_edge(edge, -1)
+        G.update_edge(edge, -1, 0)
     action = feas_actions[np.argmax(scores)]
     return action
 

@@ -42,7 +42,7 @@ def select_lookahead(feas_actions, itr, env, G):
       continue
   return np.argmax(scores)
 
-def length_oracle(self, feas_actions, iter, env, G):
+def length_oracle(feas_actions, iter, env, G):
   curr_sp = G.curr_shortest_path
   curr_sp_len = G.curr_shortest_path_len
   scores = np.array([0.0]*len(feas_actions))
@@ -54,5 +54,5 @@ def length_oracle(self, feas_actions, iter, env, G):
       new_sp = G.curr_shortest_path
       new_sp_len = G.curr_shortest_path_len
       scores[j] = scores[j] + (new_sp_len-curr_sp_len)
-      G.update_edge(edge, -1)
+      G.update_edge(edge, -1, 0)
   return np.argmax(scores)

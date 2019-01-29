@@ -61,24 +61,25 @@ class GraphWrapper(object):
 
 
   def reset(self):
-    self.G = self.to_graph_tool(self.adj_mat) #Graph(directed=False)
-    estat = self.G.new_edge_property("int")
-    self.G.edge_properties['status'] = estat
+    # self.G = self.to_graph_tool(self.adj_mat) #Graph(directed=False)
+    # estat = self.G.new_edge_property("int")
+    # self.G.edge_properties['status'] = estat
     
-    if self.pos is not None:
-      vert_pos = self.G.new_vertex_property("vector<double>")
-      self.G.vp['pos'] = vert_pos
-      for v in self.G.vertices():
-        vert_pos[v] = self.pos[v]
+    # if self.pos is not None:
+    #   vert_pos = self.G.new_vertex_property("vector<double>")
+    #   self.G.vp['pos'] = vert_pos
+    #   for v in self.G.vertices():
+    #     vert_pos[v] = self.pos[v]
         
-    if self.edge_priors is not None:
-      eprior = self.G.new_edge_property("double")
-      self.G.edge_properties['p_free'] = eprior
+    # if self.edge_priors is not None:
+    #   eprior = self.G.new_edge_property("double")
+    #   self.G.edge_properties['p_free'] = eprior
     
     for edge in self.G.edges():
       self.G.edge_properties['status'][edge] = -1
-      if self.edge_priors is not None:
-        eprior[edge] = self.edge_priors[(edge.source(), edge.target())]
+      self.G.edge_properties['weight'][edge] = self.adj_mat[int(edge.source()), int(edge.target())]
+      # if self.edge_priors is not None:
+      #   eprior[edge] = self.edge_priors[(edge.source(), edge.target())]
 
     
 
@@ -104,18 +105,12 @@ class GraphWrapper(object):
 
 
   def shortest_path(self, source, target, attr='weight', dist_fn = 'euc_dist'):
-    # if self.pos:
-    #   # return nx.astar_path(self.G, source, target, self.dist_fns[dist_fn], 'weight')
-  
-    # else:
-    #   return nx.shortest_path(self.G, source, target)
     sp, _ = shortest_path(self.G, self.G.vertex(self.source), self.G.vertex(self.target), self.G.edge_properties['weight'])  
     return sp
   
   def update_edge(self, edge, status, prev_stat=-1):
     gt_edge = self.G.edge(edge[0], edge[1])
     self.G.edge_properties['status'][gt_edge] = status #update edge status
-    # if status == 0 or status == -1:
     if status == 0: 
       self.G.edge_properties['weight'][gt_edge] = np.inf #if invalid set weight to infinity
       if prev_stat == -1:
@@ -175,8 +170,7 @@ class GraphWrapper(object):
     # attr_dict = self.G[edge[0]][edge[1]]
     gt_edge = self.G.edge(edge[0], edge[1])
 
-    p_free = self.edge_priors[edge] #self.G.edge_properties['p_free'][gt_edge] #self.edge_priors[edge]
-    # print p_free, self.edge_priors[edge]
+    p_free = self.edge_priors[edge]
     forward_score = 1.0
     # backward_score = 1.0
     if num_path_edges > 1:

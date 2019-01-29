@@ -167,12 +167,10 @@ class GraphEnv2D(gym.Env):
         self.curr_idx = (self.curr_idx + 1) % self.max_envs
         self.curr_edge_stats = self.edge_statuses[self.world_num-self.file_idxing, :] #Sample a random world from the dataset
         self.reinit_graph_status(self.curr_edge_stats)
-        # self.sp = nx.astar_path(self.G, self.source_node, self.target_node, self.euc_dist, weight='weight') #The environment pre-calculates shortest path
         self.sp, self.sp_edge = shortest_path(self.G, self.G.vertex(self.source_node), self.G.vertex(self.target_node), self.G.edge_properties['weight'])
-        # print self.sp
-        if self.path_length(self.sp_edge) < np.inf:
+        if len(self.sp) > 0:
           solvable=True
-        # print "Environment is solvable - ",solvable
+          # print "Environment is solvable - ",solvable
       # self.world_num = 17
       # self.sp_edge = self.to_edge_path(self.sp)
       self.im_num =  self.world_num

@@ -5,12 +5,11 @@ envs=('graphEnvHerbValidation-v1' 'graphEnvHerbValidation-v2' 'graphEnvHerbValid
 base_folder='../../rss_sp_rl/experiments/graph_collision_checking_datasets/'
 folders=(${base_folder}'dataset_herb_1/lsp_selectors' ${base_folder}'dataset_herb_2/lsp_selectors' ${base_folder}'dataset_herb_3/lsp_selectors'\
          ${base_folder}'dataset_herb_4/lsp_selectors' ${base_folder}'dataset_herb_5/lsp_selectors')
-         # ${base_folder}'dataset_2d_8/lsp_selectors')
 
 
-run_idxs=(0 1 2 3 4)
+run_idxs=(3 4)
 
-num_episodes=30
+num_episodes=100
 seed_val=0
 
 

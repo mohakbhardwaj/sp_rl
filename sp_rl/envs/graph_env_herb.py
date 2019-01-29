@@ -108,7 +108,6 @@ class GraphEnvHerb(gym.Env):
     # print 
     prior_vec =  np.mean(train_only, axis=0)
     for a,edge in self.action_to_edge.iteritems():
-      # print a
       edge_priors[(edge[0], edge[1])] = prior_vec[a]
       edge_priors[(edge[1], edge[0])] = prior_vec[a]
 
@@ -138,15 +137,14 @@ class GraphEnvHerb(gym.Env):
     if not self.first_reset:
       while not solvable:
         self.world_num = self.world_arr[self.curr_idx]
-        # print self.curr_idx
-        # self.world_num = 17
         self.curr_idx = (self.curr_idx + 1) % self.max_envs
         self.curr_edge_stats = self.edge_statuses[self.world_num-self.file_idxing, :] #Sample a random world from the dataset
         self.reinit_graph_status(self.curr_edge_stats)
         self.sp, self.sp_edge = shortest_path(self.G, self.G.vertex(self.source_node), self.G.vertex(self.target_node), self.G.edge_properties['weight'])
-        if self.path_length(self.sp_edge) < np.inf:
+        # print self.sp
+        if len(self.sp) > 0:
           solvable=True
-        # print "Environment is solvable - ",solvable
+        # print "Environment is solvable - ", solvable
     # if self.render_called:
     #   plt.close(self.fig)
     #   self.render_called = False

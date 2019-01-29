@@ -18,7 +18,7 @@ def main(args):
   #Parameters
   for selector in selectors:
     print('Baseline = {}'.format(selector))
-    _, _ = env.reset(roll_back=True)
+    # _, _ = env.reset(roll_back=True)
     ftr_params = None
     lite_ftrs = True
     agent = HeuristicAgent(env, selector, ftr_params, lite_ftrs)
