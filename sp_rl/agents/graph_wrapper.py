@@ -215,8 +215,7 @@ class GraphWrapper(object):
                      backward_oh,
                      alt_oh,
                      valid_checked,
-                     invalid_checked,
-                     self.curr_sp_len])
+                     invalid_checked])
 
   # def curr_k_shortest(self):
     # return self.k_sp_nodes, self.k_sp, self.k_sp_len
@@ -228,8 +227,8 @@ class GraphWrapper(object):
       if np.max(features[:,2]) > 0:
         features[:,2] = features[:,2]/np.max(features[:,2])
     if not self.lite_ftrs: #When not using lite_ftrs, we use one-hot vectors
-      prior_oh[np.argmax(features[:,0])] = 1.0
       prior_oh = np.zeros(shape=(features.shape[0], 1))
+      prior_oh[np.argmax(features[:,0])] = 1.0
       features_final = np.concatenate((features, prior_oh), axis=1)
     else:
       features_final = features

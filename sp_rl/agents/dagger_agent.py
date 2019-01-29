@@ -122,23 +122,23 @@ class DaggerAgent(Agent):
       #Doing validation if num_valid episodes > 0
       if num_valid_episodes == 0:
         self.policy = deepcopy(policy_curr)
-        mean_reward = 0
+        median_reward = 0
         reward_std = 0
       else:
         valid_rewards_dict, valid_avg_rewards_dict = self.test(self.valid_env, policy_curr, num_valid_episodes)
         valid_rewards     = [it[1] for it in sorted(valid_rewards_dict.items(), key=operator.itemgetter(0))]
         valid_avg_rewards = [it[1] for it in sorted(valid_avg_rewards_dict.items(), key=operator.itemgetter(0))]        
-        mean_reward = np.mean(valid_rewards)
+        median_reward = np.median(valid_rewards)
         reward_std = np.std(valid_rewards)
       # print ('Iteration = {}, training loss = {}, average_validation_reward = {}'.format(i+1, curr_train_loss, valid_avg_rewards[-1]))
-        if mean_reward >= best_valid_reward:
+        if median >= best_valid_reward:
           # print('Best policy yet, saving')
           self.policy = deepcopy(policy_curr)
-          best_valid_reward = mean_reward
+          best_valid_reward = median
 
-      # print 'Average validation reward = {}, std = {}, best reward yet = {}'.format(mean_reward, reward_std, best_valid_reward)      
+      # print 'Average validation reward = {}, std = {}, best reward yet = {}'.format(median, reward_std, best_valid_reward)      
       # raw_input('...')
-      validation_reward.append(mean_reward)
+      validation_reward.append(median)
       validation_std.append(reward_std)
       validation_avg_reward.append(sum(validation_reward)*1.0/(i+1.0))
       train_loss.append(curr_train_loss)

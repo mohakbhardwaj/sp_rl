@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 #Specify the command line parameters
 train_envs=('graphEnv2D-v1' 'graphEnv2D-v2' 'graphEnv2D-v3' 'graphEnv2D-v4' 'graphEnv2D-v5'\
             'graphEnv2D-v6' 'graphEnv2D-v7' 'graphEnv2D-v8')
@@ -8,9 +7,9 @@ valid_envs=('graphEnv2DValidation-v1' 'graphEnv2DValidation-v2' 'graphEnv2DValid
 
 
 base_folder='../../rss_sp_rl/experiments/rss_lsp_datasets/'
-folders=(${base_folder}'dataset_2d_1/dagger_linear_full' ${base_folder}'dataset_2d_2/dagger_linear_full' ${base_folder}'dataset_2d_3/dagger_linear_full'\
-         ${base_folder}'dataset_2d_4/dagger_linear_full' ${base_folder}'dataset_2d_5/dagger_linear_full' ${base_folder}'dataset_2d_6/dagger_linear_full'\
-         ${base_folder}'dataset_2d_7/dagger_linear_full' ${base_folder}'dataset_2d_8/dagger_linear_full')
+folders=(${base_folder}'dataset_2d_1/dagger_linear' ${base_folder}'dataset_2d_2/dagger_linear' ${base_folder}'dataset_2d_3/dagger_linear'\
+         ${base_folder}'dataset_2d_4/dagger_linear' ${base_folder}'dataset_2d_5/dagger_linear' ${base_folder}'dataset_2d_6/dagger_linear'\
+         ${base_folder}'dataset_2d_7/dagger_linear' ${base_folder}'dataset_2d_8/dagger_linear')
 
 run_idxs=(0 1 2 3 5 6)
 
@@ -22,7 +21,7 @@ echo `pwd`
 
 num_iters=10
 epsiodes_per_iter=20
-num_valid_episodes=0
+num_valid_episodes=100
 num_test_episodes=200
 
 model='linear'
