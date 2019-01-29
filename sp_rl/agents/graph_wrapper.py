@@ -225,7 +225,8 @@ class GraphWrapper(object):
     features = np.array([self.edge_features(edge, i, len(edges), itr) for i, edge in enumerate(edges)])
     #Normalize the delta_len feature
     if self.num_features >=3:
-      features[:,2] = features[:,2]/np.max(features[:,2])
+      if np.max(features[:,2]) > 0:
+        features[:,2] = features[:,2]/np.max(features[:,2])
     if not self.lite_ftrs: #When not using lite_ftrs, we use one-hot vectors
       prior_oh[np.argmax(features[:,0])] = 1.0
       prior_oh = np.zeros(shape=(features.shape[0], 1))
@@ -252,18 +253,20 @@ class GraphWrapper(object):
     curr_sp_len = self.curr_sp_len
     self.update_edge(query_edge, 0, -1)
     new_sp = self.curr_sp
-    new_sp_len = self.curr_sp_len
-  
-    delta_len = new_sp_len - curr_sp_len
-    delta_progress = 0.0
-    # print self.in_edge_form(curr_sp)
-    # print self.in_edge_form(new_sp)
-    for e in self.in_edge_form(new_sp):
-      gt_edge = self.G.edge(e[0], e[1])
-      if self.G.edge_properties['status'][gt_edge] == -1:
-        # print e
-        delta_progress += 1.0
-    delta_progress = delta_progress/(len(new_sp)-1)
+
+    if len(new_sp) > 0:
+      new_sp_len = self.curr_sp_len
+      delta_len = new_sp_len - curr_sp_len
+      delta_progress = 0.0
+      for e in self.in_edge_form(new_sp):
+        gt_edge = self.G.edge(e[0], e[1])
+        if self.G.edge_properties['status'][gt_edge] == -1:
+          # print e
+          delta_progress += 1.0
+      delta_progress = delta_progress/(len(new_sp)-1)
+    else: 
+      delta_len = 0.0
+      delta_progress = 0.0
     self.update_edge(query_edge, -1, 0)
     return delta_len, delta_progress
 
@@ -292,12 +295,15 @@ class GraphWrapper(object):
     pos2 = np.array(self.G.node[node2]['pos'])
     return np.linalg.norm(pos1 - pos2)
 
-  def path_length(self, path):
-    return sum(map(lambda e: self.adj_mat[int(e[0]), int(e[1])], path))
-
   @property
   def curr_shortest_path(self):
     return self.curr_sp
   @property
   def curr_shortest_path_len(self):
     return self.curr_sp_len
+
+  def path_length(self, path):
+    w = 0.0
+    for edge in path:
+      w = w + self.G.edge_properties['weight'][edge]
+    return w

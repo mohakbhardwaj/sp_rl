@@ -9,7 +9,7 @@ valid_envs=('graphEnv2DValidation-v1' 'graphEnv2DValidation-v2' 'graphEnv2DValid
 # valid_envs=('graphEnv2DValidation-v5' 'graphEnv2DValidation-v6')
 
 
-base_folder='../../rss_sp_rl/experiments/2d_datasets/'
+base_folder='../../rss_sp_rl/experiments/rss_lsp_datasets/'
 folders=(${base_folder}'dataset_2d_1/dagger_linear_hrfull' ${base_folder}'dataset_2d_2/dagger_linear_hrfull' ${base_folder}'dataset_2d_3/dagger_linear_hrfull'\
          ${base_folder}'dataset_2d_4/dagger_linear_hrfull' ${base_folder}'dataset_2d_5/dagger_linear_hrfull' ${base_folder}'dataset_2d_6/dagger_linear_hrfull'\
          ${base_folder}'dataset_2d_7/dagger_linear_hrfull' ${base_folder}'dataset_2d_8/dagger_linear_hrfull')

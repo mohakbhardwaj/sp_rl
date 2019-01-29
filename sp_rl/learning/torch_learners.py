@@ -83,7 +83,8 @@ class Policy():
 
   def predict(self, ftrs):
     scores = self.model(ftrs)
-    probs = nn.Softmax(dim=0)(scores) 
+    # print scores
+    probs = nn.LogSoftmax(dim=0)(scores) 
     # print scores, probs
     return probs
 
@@ -150,9 +151,9 @@ class Policy():
     for i in xrange(len(state)):
       ftrs = state[i]
       ftrs = ftrs.to(self.device)
-      probs = self.predict(ftrs)
+      logprobs = self.predict(ftrs)
       curr_t = targets[i].to(self.device)
-      loss += -1.0*torch.log(probs[curr_t])#Do cross entropy loss here
+      loss += -1.0*logprobs[curr_t] #-1.0*torch.log(probs[curr_t])#Do cross entropy loss here
     loss = loss/len(state)*1.0
     # print "Loss = ", loss
     # raw_input('..')

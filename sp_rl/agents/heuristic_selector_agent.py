@@ -170,7 +170,7 @@ class HeuristicAgent(Agent):
 
   def get_score(self, feas_actions, iter, G):
     curr_sp = G.curr_shortest_path
-    print(G.in_edge_form(curr_sp))
+    # print(G.in_edge_form(curr_sp))
     curr_sp_len = G.curr_shortest_path_len
     scores = [0.0]*len(feas_actions)
     for (j, action) in enumerate(feas_actions):

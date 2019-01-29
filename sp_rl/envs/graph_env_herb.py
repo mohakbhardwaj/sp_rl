@@ -15,7 +15,8 @@ class GraphEnvHerb(gym.Env):
   metadata = {'render.modes': ['human'],
               'max_train_envs': 500,
               'num_train_envs': 200,
-              'num_validation_envs': 200}
+              'num_validation_envs': 200,
+              'num_test_envs': 300}
 
   COLOR = {1 : 'g', #Known Free
            0 : 'r', #Known Invalid
@@ -36,10 +37,16 @@ class GraphEnvHerb(gym.Env):
       self.world_arr = np.arange(self.file_idxing, self.metadata['num_train_envs']+self.file_idxing)
       self.offset = 0
       self.max_envs = self.metadata['num_train_envs']
-    if self.mode == "validation": 
+    elif self.mode == "validation": 
       self.offset = self.metadata['max_train_envs']
       self.world_arr = np.arange(self.offset + self.file_idxing, self.offset + self.metadata['num_validation_envs']+self.file_idxing)
       self.max_envs = self.metadata['num_validation_envs']
+    elif self.mode == "test":
+      self.offset = self.metadata['max_train_envs'] + self.metadata['num_validation_envs']
+      self.world_arr = np.arange(self.offset + self.file_idxing, self.offset + self.metadata['num_test_envs']+self.file_idxing)
+      self.max_envs = self.metadata['num_test_envs']
+
+
     self.action_space = spaces.Discrete(self.nedges)    
     self.observation_space = spaces.Discrete(3**self.nedges)
     self.grid = NDGrid(self.nedges, [3]*self.nedges)

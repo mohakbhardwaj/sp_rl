@@ -70,14 +70,14 @@ class DaggerAgent(Agent):
         done = False
 
         while not done:
-          # print('Current iteration = {}, Iter episode = {}, Timestep = {}, beta = {}, Best reward yet = {}'.format(i+1, k+1, j, beta, best_valid_reward))
+          print('Current iteration = {}, Iter episode = {}, Timestep = {}, beta = {}, Best reward yet = {}'.format(i+1, k+1, j, beta, best_valid_reward))
           path = self.get_path(self.G)
           feas_actions = self.filter_path(path, obs) #Only select from unevaluated edges in shortest path
           ftrs = torch.tensor(self.G.get_features([self.train_env.edge_from_action(a) for a in feas_actions], j))
-          # print ftrs
           probs = policy_curr.predict(ftrs)  
           #Do random tie breaking
           probs = probs.detach().numpy()
+          # print feas_actions, probs, ftrs
           idx_l = np.random.choice(np.flatnonzero(probs==probs.max())) #random tie breaking
           idx_exp = self.expert(feas_actions, j, self.train_env, self.G)
           if heuristic is not None: idx_heuristic = self.EXPERTS[heuristic](feas_actions, j, self.train_env, self.G) 
@@ -200,9 +200,9 @@ class DaggerAgent(Agent):
           raw_input('Press Enter')
         
 
-        test_rewards[env.im_num] = ep_reward
-        # print env.im_num
-        test_avg_rewards[env.im_num] = np.mean(test_rewards.values())
+        test_rewards[env.world_num] = ep_reward
+        # print env.world_num
+        test_avg_rewards[env.world_num] = np.mean(test_rewards.values())
         # test_rewards.append(ep_reward)
         # test_avg_rewards.append(sum(test_rewards)*1.0/(i+1.0))
         if step: raw_input('Episode over, press enter for next episode')

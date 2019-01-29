@@ -4,11 +4,11 @@ train_envs=('graphEnvHerb-v1' 'graphEnvHerb-v2' 'graphEnvHerb-v3' 'graphEnvHerb-
 valid_envs=('graphEnvHerbValidation-v1' 'graphEnvHerbValidation-v2' 'graphEnvHerbValidation-v3' 'graphEnvHerbValidation-v4' 'graphEnvHerbValidation-v5')
 
 
-base_folder='../../rss_sp_rl/experiments/graph_collision_checking_datasets/'
+base_folder='../../rss_sp_rl/experiments/rss_lsp_datasets/'
 folders=(${base_folder}'dataset_herb_1/dagger_linear_full' ${base_folder}'dataset_herb_2/dagger_linear_full' ${base_folder}'dataset_herb_3/dagger_linear_full'\
          ${base_folder}'dataset_herb_4/dagger_linear_full' ${base_folder}'dataset_herb_5/dagger_linear_full')
 
-run_idxs=(3 4)
+run_idxs=(3)
 
 printf "Changing directories"
 echo `pwd`
@@ -19,7 +19,7 @@ echo `pwd`
 num_iters=10
 epsiodes_per_iter=20
 num_valid_episodes=0
-num_test_episodes=30
+num_test_episodes=100
 
 model='linear'
 expert='length_oracle'

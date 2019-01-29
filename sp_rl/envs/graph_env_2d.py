@@ -16,7 +16,8 @@ class GraphEnv2D(gym.Env):
   metadata = {'render.modes': ['human'],
               'max_train_envs': 500,
               'num_train_envs': 200,
-              'num_validation_envs': 200}
+              'num_validation_envs': 200,
+              'num_test_envs': 300}
 
   COLOR = {1 : 'g', #Known Free
            0 : 'r', #Known Invalid
@@ -37,10 +38,16 @@ class GraphEnv2D(gym.Env):
       self.world_arr = np.arange(self.file_idxing, self.metadata['num_train_envs']+self.file_idxing)
       self.offset = 0
       self.max_envs = self.metadata['num_train_envs']
-    if self.mode == "validation": 
+    elif self.mode == "validation": 
       self.offset = self.metadata['max_train_envs']
       self.world_arr = np.arange(self.offset + self.file_idxing, self.offset + self.metadata['num_validation_envs']+self.file_idxing)
       self.max_envs = self.metadata['num_validation_envs']
+    elif self.mode == "test": 
+      self.offset = self.metadata['max_train_envs'] + self.metadata['num_validation_envs']
+      self.world_arr = np.arange(self.offset + self.file_idxing, self.offset + self.metadata['num_test_envs']+self.file_idxing)
+      self.max_envs = self.metadata['num_test_envs']
+    
+
     self.action_space = spaces.Discrete(self.nedges)    
     self.observation_space = spaces.Discrete(3**self.nedges)
     self.grid = NDGrid(self.nedges, [3]*self.nedges)
@@ -71,9 +78,9 @@ class GraphEnv2D(gym.Env):
     act_num = 0
     for i in xrange(2, len(graph_lines)):
       s = graph_lines[i].split()
-      eid = int(s[0]) - 1 #edges ids in dataset start with 
-      pid = int(s[1]) - 1 #parent node
-      cid = int(s[2]) - 1 #child node
+      eid = int(s[0]) #- 1 #edges ids in dataset start with 
+      pid = int(s[1]) #- 1 #parent node
+      cid = int(s[2]) #- 1 #child node
       w = float(s[3])     #edge weight
       # prior = float(s[4])
       if (pid, cid) not in edge_to_action and (cid, pid) not in edge_to_action:
@@ -111,8 +118,8 @@ class GraphEnv2D(gym.Env):
     string = folder  + '/coll_check_results.dat'
     edge_stats = np.loadtxt(os.path.abspath(string), dtype=int, delimiter=',')
     edge_stats = edge_stats[:, list(self.act_to_idx.values())]
-    with open(os.path.join(folder, "start_idx.dat")) as f: source_node = int(f.read().splitlines()[0].split()[0]) - 1
-    with open(os.path.join(folder, "goal_idx.dat")) as f: target_node = int(f.read().splitlines()[0].split()[0]) - 1
+    with open(os.path.join(folder, "start_idx.dat")) as f: source_node = int(f.read().splitlines()[0].split()[0]) #- 1
+    with open(os.path.join(folder, "goal_idx.dat")) as f: target_node = int(f.read().splitlines()[0].split()[0])  #- 1
     return source_node, target_node, edge_stats, edge_stats.shape[0]#, edge_stats_full
   
   def reinit_graph_status(self, edge_stats):
@@ -177,7 +184,7 @@ class GraphEnv2D(gym.Env):
       # print self.im_num
       im_name = str(self.im_num)
       # print self.im_num
-      # print self.curr_idx, world_num, im_name
+      # print self.curr_idx, self.world_num, im_name
       if self.file_idxing == 1: im_name = "world_" + str(self.im_num)
       self.img = np.flipud(plt.imread(os.path.join(self.dataset_folder, "environment_images/"+im_name+".png")))
     if self.render_called:
