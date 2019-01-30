@@ -11,7 +11,7 @@ folders=(${base_folder}'dataset_2d_1/dagger_linear' ${base_folder}'dataset_2d_2/
          ${base_folder}'dataset_2d_4/dagger_linear' ${base_folder}'dataset_2d_5/dagger_linear' ${base_folder}'dataset_2d_6/dagger_linear'\
          ${base_folder}'dataset_2d_7/dagger_linear' ${base_folder}'dataset_2d_8/dagger_linear')
 
-run_idxs=(0 1 2 3 5 6)
+run_idxs=(5 7)
 
 printf "Changing directories"
 echo `pwd`
