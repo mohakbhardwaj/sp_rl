@@ -5,8 +5,8 @@ valid_envs=('graphEnvHerbValidation-v1' 'graphEnvHerbValidation-v2' 'graphEnvHer
 
 
 base_folder='../../rss_sp_rl/experiments/rss_lsp_datasets/'
-folders=(${base_folder}'dataset_herb_1/dagger_nn_full' ${base_folder}'dataset_herb_2/dagger_nn_full' ${base_folder}'dataset_herb_3/dagger_nn_full'\
-         ${base_folder}'dataset_herb_4/dagger_nn_full' ${base_folder}'dataset_herb_5/dagger_nn_full')
+folders=(${base_folder}'dataset_herb_1/dagger_nn' ${base_folder}'dataset_herb_2/dagger_nn' ${base_folder}'dataset_herb_3/dagger_nn'\
+         ${base_folder}'dataset_herb_4/dagger_nn' ${base_folder}'dataset_herb_5/dagger_nn')
 
 run_idxs=(0 1 2 3 4)
 
@@ -24,9 +24,9 @@ num_test_episodes=30
 model='mlp'
 expert='length_oracle'
 beta0=0.7
-alpha=0.01
-batch_size=32
-epochs=7
+alpha=0.001
+batch_size=64
+epochs=20
 weight_decay=0.2
 seed_val=0
 
