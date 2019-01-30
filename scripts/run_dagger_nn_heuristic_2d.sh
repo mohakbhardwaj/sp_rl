@@ -26,13 +26,13 @@ echo `pwd`
 
 num_iters=15
 epsiodes_per_iter=200
-num_valid_episodes=60
+num_valid_episodes=0
 num_test_episodes=200
 
 model='mlp'
 expert='length_oracle'
 beta0=0.7
-alpha=0.01
+alpha=0.001
 batch_size=32
 epochs=7
 weight_decay=0.2

@@ -9,7 +9,7 @@ valid_envs=('graphEnv2DValidation-v1' 'graphEnv2DValidation-v2' 'graphEnv2DValid
 # valid_envs=('graphEnv2DValidation-v5' 'graphEnv2DValidation-v6')
 
 
-base_folder='../../rss_sp_rl_experiments/experiments/rss_lsp_datasets/'
+base_folder='../../rss_sp_rl/experiments/rss_lsp_datasets/'
 folders=(${base_folder}'dataset_2d_1/dagger_nn' ${base_folder}'dataset_2d_2/dagger_nn' ${base_folder}'dataset_2d_3/dagger_nn'\
          ${base_folder}'dataset_2d_4/dagger_nn' ${base_folder}'dataset_2d_5/dagger_nn' ${base_folder}'dataset_2d_6/dagger_nn'\
          ${base_folder}'dataset_2d_7/dagger_nn' ${base_folder}'dataset_2d_8/dagger_nn')
@@ -23,14 +23,14 @@ cd ../examples
 echo `pwd`
 
 
-num_iters=10
+num_iters=15
 episodes_per_iter=200
-num_valid_episodes=70
+num_valid_episodes=0
 num_test_episodes=200
 
 model='mlp'
 expert='length_oracle'
-beta0=0.0
+beta0=0.7
 alpha=0.001
 batch_size=64
 epochs=1
