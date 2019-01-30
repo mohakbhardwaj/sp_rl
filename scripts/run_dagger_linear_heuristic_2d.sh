@@ -10,12 +10,12 @@ valid_envs=('graphEnv2DValidation-v1' 'graphEnv2DValidation-v2' 'graphEnv2DValid
 
 
 base_folder='../../rss_sp_rl/experiments/rss_lsp_datasets/'
-folders=(${base_folder}'dataset_2d_1/dagger_linear_hrfull' ${base_folder}'dataset_2d_2/dagger_linear_hrfull' ${base_folder}'dataset_2d_3/dagger_linear_hrfull'\
-         ${base_folder}'dataset_2d_4/dagger_linear_hrfull' ${base_folder}'dataset_2d_5/dagger_linear_hrfull' ${base_folder}'dataset_2d_6/dagger_linear_hrfull'\
-         ${base_folder}'dataset_2d_7/dagger_linear_hrfull' ${base_folder}'dataset_2d_8/dagger_linear_hrfull')
+folders=(${base_folder}'dataset_2d_1/dagger_linear_hr' ${base_folder}'dataset_2d_2/dagger_linear_hr' ${base_folder}'dataset_2d_3/dagger_linear_hr'\
+         ${base_folder}'dataset_2d_4/dagger_linear_hr' ${base_folder}'dataset_2d_5/dagger_linear_hr' ${base_folder}'dataset_2d_6/dagger_linear_hr'\
+         ${base_folder}'dataset_2d_7/dagger_linear_hr' ${base_folder}'dataset_2d_8/dagger_linear_hr')
 
 # folders=(${base_folder}'dataset_2d_5/dagger_linear' ${base_folder}'dataset_2d_6/dagger_linear')
-run_idxs=(0 1 2 3 5 6)
+run_idxs=(0 1 2 3 5 6 7)
 heuristics=('select_prior' 'select_forward' 'select_alternate' 'select_backward' 'select_forward' 'select_backward' 'select_prior')
 
 printf "Changing directories"
@@ -32,13 +32,13 @@ num_test_episodes=200
 model='linear'
 expert='length_oracle'
 beta0=0.7
-alpha=0.01
+alpha=0.001
 batch_size=32
 epochs=3
 weight_decay=0.2
 seed_val=0
-# #
-for ((i=0;i<${#run_idxs[@]};++i)); do
+# # 
+for ((i=4;i<${#run_idxs[@]};++i)); do
   idx=run_idxs[i]
   printf idx
   printf "====Train Environment %s Validation Environment %s Folder %s\n" "${train_envs[idx]}" "${valid_envs[idx]}" "${folders[idx]} ===="

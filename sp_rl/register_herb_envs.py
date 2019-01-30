@@ -17,6 +17,14 @@ register(
 )
 
 register(
+    id='graphEnvHerbTest-v1',
+    entry_point='sp_rl.envs:GraphEnvHerb',
+    kwargs={'dataset_folder' : os.path.abspath('../../rss_lsp_datasets/dataset_herb_1'),
+            'mode' : 'test'}
+)
+
+
+register(
     id='graphEnvHerb-v2',
     entry_point='sp_rl.envs:GraphEnvHerb',
     kwargs={'dataset_folder' : os.path.abspath('../../rss_lsp_datasets/dataset_herb_2'),
@@ -28,6 +36,13 @@ register(
     entry_point='sp_rl.envs:GraphEnvHerb',
     kwargs={'dataset_folder' : os.path.abspath('../../rss_lsp_datasets/dataset_herb_2'),
             'mode' : 'validation'}
+)
+
+register(
+    id='graphEnvHerbTest-v2',
+    entry_point='sp_rl.envs:GraphEnvHerb',
+    kwargs={'dataset_folder' : os.path.abspath('../../rss_lsp_datasets/dataset_herb_2'),
+            'mode' : 'test'}
 )
 
 
@@ -43,6 +58,13 @@ register(
     entry_point='sp_rl.envs:GraphEnvHerb',
     kwargs={'dataset_folder' : os.path.abspath('../../rss_lsp_datasets/dataset_herb_3'),
             'mode' : 'validation'}
+)
+
+register(
+    id='graphEnvHerbTest-v3',
+    entry_point='sp_rl.envs:GraphEnvHerb',
+    kwargs={'dataset_folder' : os.path.abspath('../../rss_lsp_datasets/dataset_herb_3'),
+            'mode' : 'test'}
 )
 
 
@@ -61,6 +83,13 @@ register(
 )
 
 register(
+    id='graphEnvHerbTest-v4',
+    entry_point='sp_rl.envs:GraphEnvHerb',
+    kwargs={'dataset_folder' : os.path.abspath('../../rss_lsp_datasets/dataset_herb_4'),
+            'mode' : 'test'}
+)
+
+register(
     id='graphEnvHerb-v5',
     entry_point='sp_rl.envs:GraphEnvHerb',
     kwargs={'dataset_folder' : os.path.abspath('../../rss_lsp_datasets/dataset_herb_5'),
@@ -72,4 +101,12 @@ register(
     entry_point='sp_rl.envs:GraphEnvHerb',
     kwargs={'dataset_folder' : os.path.abspath('../../rss_lsp_datasets/dataset_herb_5'),
             'mode' : 'validation'}
+)
+
+
+register(
+    id='graphEnvHerbTest-v5',
+    entry_point='sp_rl.envs:GraphEnvHerb',
+    kwargs={'dataset_folder' : os.path.abspath('../../rss_lsp_datasets/dataset_herb_5'),
+            'mode' : 'test'}
 )

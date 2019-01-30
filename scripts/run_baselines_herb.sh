@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-envs=('graphEnvHerbValidation-v1' 'graphEnvHerbValidation-v2' 'graphEnvHerbValidation-v3' 'graphEnvHerbValidation-v4' 'graphEnvHerbValidation-v5')
+# envs=('graphEnvHerbValidation-v1' 'graphEnvHerbValidation-v2' 'graphEnvHerbValidation-v3' 'graphEnvHerbValidation-v4' 'graphEnvHerbValidation-v5')
+envs=('graphEnvHerbTest-v1' 'graphEnvHerbTest-v2' 'graphEnvHerbTest-v3' 'graphEnvHerbTest-v4' 'graphEnvHerbTest-v5')
 
 
 base_folder='../../rss_sp_rl/experiments/rss_lsp_datasets/'
-folders=(${base_folder}'dataset_herb_1/lsp_selectors_validation' ${base_folder}'dataset_herb_2/lsp_selectors_validation' ${base_folder}'dataset_herb_3/lsp_selectors_validation'\
-         ${base_folder}'dataset_herb_4/lsp_selectors_validation' ${base_folder}'dataset_herb_5/lsp_selectors_validation')
-
+folders=(${base_folder}'dataset_herb_1/lsp_selectors_test' ${base_folder}'dataset_herb_2/lsp_selectors_test' ${base_folder}'dataset_herb_3/lsp_selectors_test'\
+         ${base_folder}'dataset_herb_4/lsp_selectors_test' ${base_folder}'dataset_herb_5/lsp_selectors_test')
 
 run_idxs=(3 4)
 
-num_episodes=100
+num_episodes=200
 seed_val=0
 
 
