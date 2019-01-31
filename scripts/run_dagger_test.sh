@@ -2,14 +2,14 @@
 #Specify the command line parameters
 train_envs=('graphEnv2D-v1' 'graphEnv2D-v2' 'graphEnv2D-v3' 'graphEnv2D-v4' 'graphEnv2D-v5' 'graphEnv2D-v6' 'graphEnv2D-v7' 'graphEnv2D-v8' \
             'graphEnvHerb-v4' 'graphEnvHerb-v5')
-valid_envs=('graphEnv2DValidation-v1' 'graphEnv2DValidation-v2' 'graphEnv2DValidation-v3' 'graphEnv2DValidation-v4' 'graphEnv2DValidation-v5' \
-            'graphEnv2DValidation-v6' 'graphEnv2DValidation-v7' 'graphEnv2DValidation-v8' 'graphEnvHerbValidation-v4' 'graphEnvHerbValidation-v5')
+valid_envs=('graphEnv2DTest-v1' 'graphEnv2DTest-v2' 'graphEnv2DTest-v3' 'graphEnv2DTest-v4' 'graphEnv2DTest-v5' \
+            'graphEnv2DTest-v6' 'graphEnv2DTest-v7' 'graphEnv2DTest-v8' 'graphEnvHerbTest-v4' 'graphEnvHerbTest-v5')
 
 
 base_folder='../../rss_sp_rl/experiments/rss_lsp_datasets/'
 # folders=(${base_folder}'dataset_2d_1/dagger_linear' ${base_folder}'dataset_2d_2/dagger_linear' ${base_folder}'dataset_2d_3/dagger_linear'\
 #          ${base_folder}'dataset_2d_4/dagger_linear' ${base_folder}'dataset_2d_5/dagger_linear' ${base_folder}'dataset_2d_6/dagger_linear'\
-#          ${base_folder}'dataset_2d_7/dagger_linear' ${base_folder}'dataset_2d_8/dagger_linear'\
+#          ${base_folder}'dataset_2d_7/dagger_linear_full' ${base_folder}'dataset_2d_8/dagger_linear'\
 #          ${base_folder}'dataset_herb_4/dagger_linear_full' ${base_folder}'dataset_herb_5/dagger_linear_full')
 
 folders=(${base_folder}'dataset_2d_1/dagger_linear_hr' ${base_folder}'dataset_2d_2/dagger_linear_hr' ${base_folder}'dataset_2d_3/dagger_linear_hr'\
@@ -21,7 +21,7 @@ folders=(${base_folder}'dataset_2d_1/dagger_linear_hr' ${base_folder}'dataset_2d
 # model_files=('dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' 'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0'
 #              'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' 'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0'
 #              'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' 'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' \
-#              'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' 'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' \
+#              'dagger_10_20_0_linear_length_oracle_0.7_0.01_32_3_0.2_lite_ftrs_0' 'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' \
 #              'dagger_10_20_0_linear_length_oracle_0.7_0.01_32_3_0.2_lite_ftrs_0'  'dagger_10_20_0_linear_length_oracle_0.7_0.01_32_3_0.2_lite_ftrs_0')
 
 model_files=('dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' 'dagger_10_20_0_linear_length_oracle_0.7_0.01_32_3_0.2_lite_ftrs_0'
@@ -30,7 +30,8 @@ model_files=('dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0
              'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' 'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' \
              'dagger_10_20_0_linear_length_oracle_0.7_0.01_32_3_0.2_lite_ftrs_0'  'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0')
 
-run_idxs=(0 1 2 3 5 6 7 8 9)
+run_idxs=(0 1 2 3 5 6 7)
+# 8 9)
 
 printf "Changing directories"
 echo `pwd`

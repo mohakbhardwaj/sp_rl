@@ -224,9 +224,6 @@ class HeuristicAgent(Agent):
 
 
 
-
-
-
   def get_scores(self, feas_actions, iter, G):
     curr_sp = G.curr_shortest_path
     # print(G.in_edge_form(curr_sp))
