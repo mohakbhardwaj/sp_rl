@@ -19,8 +19,10 @@ class HeuristicAgent(Agent):
                       'select_k_shortest': self.select_k_shortest,
                       'select_multiple': self.select_multiple,
                       'select_priorkshort': self.select_priorkshort,
-                      'select_lookahead': self.select_lookahead,
-                      'length_oracle':self.length_oracle}
+                      'select_lookahead_len': self.select_lookahead_len,
+                      'select_lookahead_prog': self.select_lookahead_prog,
+                      'length_oracle':self.length_oracle,
+                      'length_oracle_2':self.length_oracle_2}
 
 
     self.selector = self.SELECTORS[selector_str]
@@ -135,22 +137,51 @@ class HeuristicAgent(Agent):
     h = map(lambda x: x[0]*x[1], zip(kshort,priors))
     return feas_actions[np.argmax(h)]
   
-  def select_lookahead(self, feas_actions, iter, G):
-    k_sp_nodes, k_sp, k_sp_len = G.curr_k_shortest()
-    scores = [0]*len(feas_actions)
+  def select_lookahead_len(self, feas_actions, iter, G):
+    # k_sp_nodes, k_sp, k_sp_len = G.curr_k_shortest()
+    # scores = [0]*len(feas_actions)
     # print k_sp[0], G.curr_sp, len(k_sp)
-    for j, action in enumerate(feas_actions):
-      edge = self.env.edge_from_action(action)
-      # print "edge", edge, self.env.G[edge[0]][edge[1]]['status']
-      if self.env.G[edge[0]][edge[1]]['status'] == 0:
-        #do something
-        for sp in k_sp:
-          if (edge[0],edge[1]) in sp or (edge[1],edge[0]) in sp:
-            scores[j] += 1
-      else:
-        continue
-    # print scores
-    return feas_actions[np.argmax(scores)]
+    # for j, action in enumerate(feas_actions):
+    #   edge = self.env.edge_from_action(action)
+    #   # print "edge", edge, self.env.G[edge[0]][edge[1]]['status']
+    #   if self.env.G[edge[0]][edge[1]]['status'] == 0:
+    #     #do something
+    #     for sp in k_sp:
+    #       if (edge[0],edge[1]) in sp or (edge[1],edge[0]) in sp:
+    #         scores[j] += 1
+    #   else:
+    #     continue
+    # # print scores
+    # return feas_actions[np.argmax(scores)]
+
+    edges = list(map(self.env.edge_from_action, feas_actions))
+    delta_lens, delta_progs = G.get_utils(edges)
+    # print delta_lens
+    idx_lens = np.argmax(delta_lens)
+    return feas_actions[idx_lens]
+
+  def select_lookahead_prog(self, feas_actions, iter, G):
+    # k_sp_nodes, k_sp, k_sp_len = G.curr_k_shortest()
+    # scores = [0]*len(feas_actions)
+    # print k_sp[0], G.curr_sp, len(k_sp)
+    # for j, action in enumerate(feas_actions):
+    #   edge = self.env.edge_from_action(action)
+    #   # print "edge", edge, self.env.G[edge[0]][edge[1]]['status']
+    #   if self.env.G[edge[0]][edge[1]]['status'] == 0:
+    #     #do something
+    #     for sp in k_sp:
+    #       if (edge[0],edge[1]) in sp or (edge[1],edge[0]) in sp:
+    #         scores[j] += 1
+    #   else:
+    #     continue
+    # # print scores
+    # return feas_actions[np.argmax(scores)]
+
+    edges = list(map(self.env.edge_from_action, feas_actions))
+    delta_lens, delta_progs = G.get_utils(edges)
+    idx_prog = np.argmax(delta_progs)
+    return feas_actions[idx_prog]
+
 
   def length_oracle(self, feas_actions, iter, G, horizon=2):
     curr_sp = G.curr_shortest_path
@@ -168,19 +199,51 @@ class HeuristicAgent(Agent):
     action = feas_actions[np.argmax(scores)]
     return action
 
-  def get_score(self, feas_actions, iter, G):
+  def length_oracle_2(self, feas_actions, iter, G, horizon=2):
+    curr_sp = G.curr_shortest_path
+    curr_sp_len = G.curr_shortest_path_len
+    scores = np.array([0.0]*len(feas_actions))
+    
+    for (j, action) in enumerate(feas_actions):
+      gt_edge = self.env.gt_edge_from_action(action)
+      edge = (gt_edge.source(), gt_edge.target())
+      if self.env.G.edge_properties['status'][gt_edge] == 0:
+        G.update_edge(edge, 0)
+        new_sp = G.curr_shortest_path
+        new_sp_len = G.curr_shortest_path_len
+        reward = (new_sp_len - curr_sp_len)
+
+        edge_sp = G.in_edge_tup_form(new_sp)
+        f_a = [self.env.action_from_edge(e) for e in edge_sp]
+        value = np.max(self.get_scores(f_a, iter, G))
+        scores[j] = reward + value
+        G.update_edge(edge, -1, 0)
+    
+    action = feas_actions[np.argmax(scores)]
+    return action
+
+
+
+
+
+
+  def get_scores(self, feas_actions, iter, G):
     curr_sp = G.curr_shortest_path
     # print(G.in_edge_form(curr_sp))
     curr_sp_len = G.curr_shortest_path_len
     scores = [0.0]*len(feas_actions)
     for (j, action) in enumerate(feas_actions):
       # edge = self.env.edge_from_action(action)
-      gt_edge = env.gt_edge_from_action(action)
-      if env.G.edge_properties['status'][gt_edge] == 0:
+      gt_edge = self.env.gt_edge_from_action(action)
+      edge = (gt_edge.source(), gt_edge.target())
+      if self.env.G.edge_properties['status'][gt_edge] == 0:
         G.update_edge(edge, 0)
         new_sp = G.curr_shortest_path
-        new_sp_len = G.curr_shortest_path_len
-        scores[j] = scores[j] + (new_sp_len-curr_sp_len)
+        if len(new_sp) > 0:
+          new_sp_len = G.curr_shortest_path_len
+          reward = new_sp_len-curr_sp_len
+        else: reward = np.inf
+        scores[j] = reward
         G.update_edge(edge, -1)
     # print('length oracle score'), scores
     return scores

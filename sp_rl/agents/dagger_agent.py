@@ -8,7 +8,7 @@ import sp_rl
 import networkx as nx
 from agent import Agent
 from copy import deepcopy
-from sp_rl.learning import LinearNet, ExperienceBuffer, select_forward, select_backward, select_alternate, select_prior, select_lookahead, length_oracle, init_weights
+from sp_rl.learning import LinearNet, ExperienceBuffer, select_forward, select_backward, select_alternate, select_prior, select_lookahead, length_oracle, init_weights, select_lookahead_len
 
 class DaggerAgent(Agent):
   def __init__(self, train_env, valid_env, policy, beta0, expert_str, G, epochs):
@@ -19,7 +19,8 @@ class DaggerAgent(Agent):
                     'select_alternate': select_alternate,
                     'select_prior': select_prior, 
                     'select_lookahead': select_lookahead,
-                    'length_oracle': length_oracle}
+                    'length_oracle': length_oracle,
+                    'select_lookahead_len': select_lookahead_len}
     
     self.train_env = train_env
     self.valid_env = valid_env
@@ -31,7 +32,7 @@ class DaggerAgent(Agent):
     # self.T = T
 
 
-  def train(self, num_iterations, num_eval_episodes, num_valid_episodes, heuristic = None, re_init=False, render=False, step=False):
+  def train(self, num_iterations, num_eval_episodes, num_valid_episodes, heuristic = None, re_init=False, render=False, step=False, mixed_rollin=False):
     train_rewards = []
     train_avg_rewards = []
     train_loss = []
@@ -45,8 +46,9 @@ class DaggerAgent(Agent):
     D = ExperienceBuffer() 
     policy_curr = deepcopy(self.policy)
     best_valid_reward = -np.inf
-
+    curr_median_reward = -np.inf
     for i in xrange(num_iterations):
+      iter_rewards = []
       if i == 0:
         beta = 1.0 #Rollout with expert initially
       else:
@@ -71,7 +73,7 @@ class DaggerAgent(Agent):
           done = False
 
           while not done:
-            print('Current iteration = {}, Iter episode = {}, Timestep = {}, beta = {}, Best reward yet = {}'.format(i+1, k+1, j, beta, best_valid_reward))
+            print('Current iteration = {}, Iter episode = {}, Timestep = {}, beta = {}, Curr median reward = {}'.format(i+1, k+1, j, beta, curr_median_reward))
             path = self.get_path(self.G)
             feas_actions = self.filter_path(path, obs) #Only select from unevaluated edges in shortest path
             ftrs = torch.tensor(self.G.get_features([self.train_env.edge_from_action(a) for a in feas_actions], j))
@@ -81,8 +83,13 @@ class DaggerAgent(Agent):
             # print feas_actions, probs, ftrs
             idx_l = np.random.choice(np.flatnonzero(probs==probs.max())) #random tie breaking
             idx_exp = self.expert(feas_actions, j, self.train_env, self.G)
-            if heuristic is not None: idx_heuristic = self.EXPERTS[heuristic](feas_actions, j, self.train_env, self.G) 
-            else: idx_heuristic = idx_exp
+            idmix = idx_exp
+            if heuristic is not None: 
+              idx_heuristic = self.EXPERTS[heuristic](feas_actions, j, self.train_env, self.G) 
+              if mixed_rollin:
+                idmix = np.random.choice([idx_exp, idx_heuristic])
+              else:
+                idmix = idx_heuristic
             #Aggregate the data
             D.push(ftrs, torch.tensor([idx_exp]))
             #Execute mixture
@@ -90,8 +97,9 @@ class DaggerAgent(Agent):
               idx = idx_l 
               # print('Learner action')
             else:
-              idx = idx_heuristic
-              # print('Expert action')
+              idx = idmix
+              if idx == idx_exp: print('Expert action')
+              elif idx == idx_heuristic: print('Heuristic action') 
             act_id = feas_actions[idx]
             act_e = self.train_env.edge_from_action(act_id)
             # print ('Q_vals = {}, feasible_actions = {}, chosen edge = {}, features = {}'.format(q_vals, feas_actions, act_e, ftrs))
@@ -100,9 +108,10 @@ class DaggerAgent(Agent):
             j += 1
             ep_reward += reward
           
+          iter_rewards.append(ep_reward)
           train_rewards.append(ep_reward)
           train_avg_rewards.append(sum(train_rewards)*1.0/(i*num_eval_episodes + k +1.0))      
-      
+        curr_median_reward = np.median(iter_rewards)
       #re-initialize policy and train
       if re_init:
         print('Current policy parameters')
@@ -152,6 +161,7 @@ class DaggerAgent(Agent):
     # print policy.model.fc.weight, policy.model.fc.bias
     test_rewards = {}
     test_avg_rewards = {}
+    test_acc = {}
     _, _ = env.reset(roll_back=True)
     policy.model.eval() #Put the model in eval mode to turn off dropout etc.
     policy.model.cpu() #Copy over the model to cpu if on cuda 
@@ -159,6 +169,7 @@ class DaggerAgent(Agent):
       for i in range(num_episodes):
         j = 0
         ep_reward = 0
+        ep_acc = 0.0
         obs, _ = env.reset()
         self.G.reset()
         path = self.get_path(self.G)
@@ -179,6 +190,9 @@ class DaggerAgent(Agent):
             self.render_env(env, feas_actions, probs)
           #select greedy action
           idx = np.random.choice(np.flatnonzero(probs==probs.max())) #random tie breaking
+          idx_exp = self.expert(feas_actions, j, self.train_env, self.G)
+          if idx == idx_exp: ep_acc = ep_acc + 1.0
+
           act_id = feas_actions[idx]
           act_e = env.edge_from_action(act_id)
           # print q_vals[idx], ftrs[idx]
@@ -203,12 +217,13 @@ class DaggerAgent(Agent):
 
         test_rewards[env.world_num] = ep_reward
         # print env.world_num
+        test_acc[env.world_num] = ep_acc/(j*1.0)
         test_avg_rewards[env.world_num] = np.mean(test_rewards.values())
         # test_rewards.append(ep_reward)
         # test_avg_rewards.append(sum(test_rewards)*1.0/(i+1.0))
         if step: raw_input('Episode over, press enter for next episode')
 
-    return test_rewards, test_avg_rewards
+    return test_rewards, test_avg_rewards, test_acc
   
 
   def render_env(self, env, path, scores):

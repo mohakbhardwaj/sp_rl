@@ -16,4 +16,5 @@ register(
 
 import register_2d_envs
 import register_herb_envs
+import register_mixture_envs
 

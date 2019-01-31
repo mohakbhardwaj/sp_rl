@@ -33,7 +33,7 @@ expert='length_oracle'
 beta0=0.7
 alpha=0.001
 batch_size=64
-epochs=1
+epochs=10
 weight_decay=0.2
 seed_val=0
 

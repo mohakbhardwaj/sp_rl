@@ -56,3 +56,10 @@ def length_oracle(feas_actions, iter, env, G):
       scores[j] = scores[j] + (new_sp_len-curr_sp_len)
       G.update_edge(edge, -1, 0)
   return np.argmax(scores)
+
+def select_lookahead_len(feas_actions, iter, env, G):
+  edges = list(map(env.edge_from_action, feas_actions))
+  delta_lens, delta_progs = G.get_utils(edges)
+  # print delta_lens
+  idx_lens = np.argmax(delta_lens)
+  return idx_lens

@@ -241,6 +241,19 @@ class GraphWrapper(object):
       prior = 1.0 - self.G.edge_properties['p_free'][gt_edge]
       priors.append(prior)
     return priors
+
+  def get_utils(self, edges):
+    delta_lens = []
+    delta_progs = []
+    for edge in edges:
+      dl, dp = self.get_edge_util(edge)
+      delta_lens.append(dl)
+      delta_progs.append(dp)
+    return delta_lens, delta_progs
+
+
+
+
   # def get_k_short_num(self, edges):
   #   return list(map(lambda e: self.G[e[0]][e[1]]['k_short_num'], edges))
   
@@ -306,3 +319,8 @@ class GraphWrapper(object):
     for edge in path:
       w = w + self.G.edge_properties['weight'][edge]
     return w
+
+  def in_edge_tup_form(self, path):
+    edge_path = self.in_edge_form(path)
+    edge_tup_path = [(self.G.vertex_index[e[0]], self.G.vertex_index[e[1]]) for e in edge_path]
+    return edge_tup_path

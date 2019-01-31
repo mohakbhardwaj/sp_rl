@@ -64,7 +64,7 @@ def main(args):
     # print args.num_iters, args.num_episodes_per_iter
     rewards, avg_rewards, train_loss, train_avg_loss, validation_rewards, \
     validation_stds, validation_avg_reward, data_points_per_iter, \
-    state_dict_per_iter = agent.train(args.num_iters, args.num_episodes_per_iter, args.num_valid_episodes, heuristic=args.heuristic, re_init=args.re_init)
+    state_dict_per_iter = agent.train(args.num_iters, args.num_episodes_per_iter, args.num_valid_episodes, heuristic=args.heuristic, re_init=args.re_init, mixed_rollin=args.mixed_rollin)
     num_train_episodes = args.num_iters * args.num_episodes_per_iter
     # print('(Training) Number of episodes = {}, Total Reward = {}, Average reward = {}, \
     #         Best validation reward = {}, Train time = {}'.format(num_train_episodes, \
@@ -138,7 +138,7 @@ def main(args):
     _,_ = valid_env.reset(roll_back=True)
     if model == "linear":
       print('Learned weights = {}'.format(agent.policy.model.state_dict()))
-    test_rewards_dict, test_avg_rewards_dict = agent.test(valid_env, agent.policy, args.num_test_episodes, render=args.render, step=args.step)
+    test_rewards_dict, test_avg_rewards_dict, test_acc_dict = agent.test(valid_env, agent.policy, args.num_test_episodes, render=args.render, step=args.step)
 
   else:
     print args.test
@@ -149,13 +149,14 @@ def main(args):
     test_env = gym.make(args.valid_env)
     test_env.seed(args.seed_val)
     _, _ = test_env.reset()
-    raw_input('Weights loaded. Press enter to start testing...')
-    test_rewards_dict, test_avg_rewards_dict = agent.test(test_env, policy, args.num_test_episodes, render=args.render, step=args.step)
+    # raw_input('Weights loaded. Press enter to start testing...')
+    test_rewards_dict, test_avg_rewards_dict, test_acc_dict = agent.test(test_env, policy, args.num_test_episodes, render=args.render, step=args.step)
   
   test_rewards     = [it[1] for it in sorted(test_rewards_dict.items(), key=operator.itemgetter(0))]
   test_avg_rewards = [it[1] for it in sorted(test_avg_rewards_dict.items(), key=operator.itemgetter(0))]
   test_results = dict()
   test_results['test_rewards'] = test_rewards_dict
+  test_results['test_acc'] = test_acc_dict
   print ('Average test rewards = {}'.format(np.mean(test_rewards)))
   print('Dumping results')
   with open(os.path.abspath(args.folder) + '/test_results.json', 'w') as fp:
@@ -209,6 +210,7 @@ if __name__ == "__main__":
   parser.add_argument("--test", action='store_true', help='Loads weights from the model file and runs testing')
   parser.add_argument("--plot", action='store_true', help='Whether to plot results or not')
   parser.add_argument("--heuristic", type=str, help="Heuristic policy to roll-in with. If not provided, expert will be used foll roll-in")
+  parser.add_argument("--mixed_rollin", action='store_true', help="Roll-in with heuristic and oracle")
   args = parser.parse_args()
   main(args)
 
