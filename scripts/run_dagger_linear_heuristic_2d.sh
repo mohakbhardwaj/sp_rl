@@ -10,13 +10,13 @@ valid_envs=('graphEnv2DValidation-v1' 'graphEnv2DValidation-v2' 'graphEnv2DValid
 
 
 base_folder='../../rss_sp_rl/experiments/rss_lsp_datasets/'
-folders=(${base_folder}'dataset_2d_1/dagger_linear_hr' ${base_folder}'dataset_2d_2/dagger_linear_hr2' ${base_folder}'dataset_2d_3/dagger_linear_hr'\
-         ${base_folder}'dataset_2d_4/dagger_linear_hr_new' ${base_folder}'dataset_2d_5/dagger_linear_hr' ${base_folder}'dataset_2d_6/dagger_linear_hr'\
-         ${base_folder}'dataset_2d_7/dagger_linear_hrmix' ${base_folder}'dataset_2d_8/dagger_linear_hr')
+folders=(${base_folder}'dataset_2d_1/dagger_linear_hr_new' ${base_folder}'dataset_2d_2/dagger_linear_hr_new' ${base_folder}'dataset_2d_3/dagger_linear_hr_new'\
+         ${base_folder}'dataset_2d_4/dagger_linear_hr_new' ${base_folder}'dataset_2d_5/dagger_linear_hr_new' ${base_folder}'dataset_2d_6/dagger_linear_hr_new'\
+         ${base_folder}'dataset_2d_7/dagger_linear_hr_new' ${base_folder}'dataset_2d_8/dagger_linear_hr_new')
 
 # folders=(${base_folder}'dataset_2d_5/dagger_linear' ${base_folder}'dataset_2d_6/dagger_linear')
-run_idxs=(3)
-heuristics=('select_prior' 'select_forward' 'select_lookahead_len' 'select_lookahead_len' 'select_prior' 'select_forward' 'select_backward' 'select_prior')
+heuristics=('select_prior' 'select_forward' 'select_alternate' 'select_backward' 'select_prior' 'select_forward' 'select_backward' 'select_prior')
+run_idxs=(0 1 2 3 5 6 7)
 
 printf "Changing directories"
 echo `pwd`

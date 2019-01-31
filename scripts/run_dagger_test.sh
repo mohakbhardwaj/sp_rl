@@ -7,15 +7,12 @@ valid_envs=('graphEnv2DTest-v1' 'graphEnv2DTest-v2' 'graphEnv2DTest-v3' 'graphEn
 
 
 base_folder='../../rss_sp_rl/experiments/rss_lsp_datasets/'
+
+#Dagger linear
 # folders=(${base_folder}'dataset_2d_1/dagger_linear' ${base_folder}'dataset_2d_2/dagger_linear' ${base_folder}'dataset_2d_3/dagger_linear'\
 #          ${base_folder}'dataset_2d_4/dagger_linear' ${base_folder}'dataset_2d_5/dagger_linear' ${base_folder}'dataset_2d_6/dagger_linear'\
 #          ${base_folder}'dataset_2d_7/dagger_linear_full' ${base_folder}'dataset_2d_8/dagger_linear'\
 #          ${base_folder}'dataset_herb_4/dagger_linear_full' ${base_folder}'dataset_herb_5/dagger_linear_full')
-
-folders=(${base_folder}'dataset_2d_1/dagger_linear_hr' ${base_folder}'dataset_2d_2/dagger_linear_hr' ${base_folder}'dataset_2d_3/dagger_linear_hr'\
-         ${base_folder}'dataset_2d_4/dagger_linear_hr' ${base_folder}'dataset_2d_5/dagger_linear_hr' ${base_folder}'dataset_2d_6/dagger_linear_hr'\
-         ${base_folder}'dataset_2d_7/dagger_linear_hr' ${base_folder}'dataset_2d_8/dagger_linear_hr'\
-         ${base_folder}'dataset_herb_4/dagger_linear_hrfull' ${base_folder}'dataset_herb_5/dagger_linear_hrfull')
 
 
 # model_files=('dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' 'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0'
@@ -23,12 +20,30 @@ folders=(${base_folder}'dataset_2d_1/dagger_linear_hr' ${base_folder}'dataset_2d
 #              'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' 'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' \
 #              'dagger_10_20_0_linear_length_oracle_0.7_0.01_32_3_0.2_lite_ftrs_0' 'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' \
 #              'dagger_10_20_0_linear_length_oracle_0.7_0.01_32_3_0.2_lite_ftrs_0'  'dagger_10_20_0_linear_length_oracle_0.7_0.01_32_3_0.2_lite_ftrs_0')
+#Dagger linear with heuristic roll-out
+# folders=(${base_folder}'dataset_2d_1/dagger_linear_hr' ${base_folder}'dataset_2d_2/dagger_linear_hr' ${base_folder}'dataset_2d_3/dagger_linear_hr'\
+#          ${base_folder}'dataset_2d_4/dagger_linear_hr' ${base_folder}'dataset_2d_5/dagger_linear_hr' ${base_folder}'dataset_2d_6/dagger_linear_hr'\
+#          ${base_folder}'dataset_2d_7/dagger_linear_hr' ${base_folder}'dataset_2d_8/dagger_linear_hr'\
+#          ${base_folder}'dataset_herb_4/dagger_linear_hrfull' ${base_folder}'dataset_herb_5/dagger_linear_hrfull')
 
-model_files=('dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' 'dagger_10_20_0_linear_length_oracle_0.7_0.01_32_3_0.2_lite_ftrs_0'
-             'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' 'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0'
-             'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' 'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' \
-             'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' 'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' \
-             'dagger_10_20_0_linear_length_oracle_0.7_0.01_32_3_0.2_lite_ftrs_0'  'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0')
+# model_files=('dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' 'dagger_10_20_0_linear_length_oracle_0.7_0.01_32_3_0.2_lite_ftrs_0'
+#              'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' 'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0'
+#              'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' 'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' \
+#              'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' 'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' \
+#              'dagger_10_20_0_linear_length_oracle_0.7_0.01_32_3_0.2_lite_ftrs_0'  'dagger_10_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0')
+
+#Behavior cloning linear
+folders=(${base_folder}'dataset_2d_1/bc_linear' ${base_folder}'dataset_2d_2/bc_linear' ${base_folder}'dataset_2d_3/bc_linear'\
+         ${base_folder}'dataset_2d_4/bc_linear' ${base_folder}'dataset_2d_5/bc_linear' ${base_folder}'dataset_2d_6/bc_linear'\
+         ${base_folder}'dataset_2d_7/bc_linear' ${base_folder}'dataset_2d_8/bc_linear'\
+         ${base_folder}'dataset_herb_4/bc_linear' ${base_folder}'dataset_herb_5/bc_linear')
+
+model_files=('dagger_1_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' 'dagger_1_20_0_linear_length_oracle_0.7_0.01_32_3_0.2_lite_ftrs_0'
+             'dagger_1_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' 'dagger_1_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0'
+             'dagger_1_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' 'dagger_1_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' \
+             'dagger_1_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' 'dagger_1_20_0_linear_length_oracle_0.7_0.001_32_3_0.2_lite_ftrs_0' \
+             'dagger_1_20_0_linear_length_oracle_0.7_0.01_32_3_0.2_lite_ftrs_0'  'dagger_1_20_0_linear_length_oracle_0.7_0.01_32_3_0.2_lite_ftrs_0')
+
 
 run_idxs=(0 1 2 3 5 6 7)
 # 8 9)
