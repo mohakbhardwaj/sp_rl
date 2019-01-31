@@ -63,3 +63,47 @@ def select_lookahead_len(feas_actions, iter, env, G):
   # print delta_lens
   idx_lens = np.argmax(delta_lens)
   return idx_lens
+
+def length_oracle_2(feas_actions, iter, env, G, horizon=2):
+  curr_sp = G.curr_shortest_path
+  curr_sp_len = G.curr_shortest_path_len
+  scores = np.array([0.0]*len(feas_actions))
+  
+  for (j, action) in enumerate(feas_actions):
+    gt_edge = env.gt_edge_from_action(action)
+    edge = (gt_edge.source(), gt_edge.target())
+    if env.G.edge_properties['status'][gt_edge] == 0:
+      G.update_edge(edge, 0)
+      new_sp = G.curr_shortest_path
+      new_sp_len = G.curr_shortest_path_len
+      reward = (new_sp_len - curr_sp_len)
+
+      edge_sp = G.in_edge_tup_form(new_sp)
+      f_a = [env.action_from_edge(e) for e in edge_sp]
+      value = np.max(get_scores(f_a, iter, G))
+      scores[j] = reward + value
+      G.update_edge(edge, -1, 0)
+  
+  action = feas_actions[np.argmax(scores)]
+  return action
+
+def get_scores(feas_actions, iter, env, G):
+  curr_sp = G.curr_shortest_path
+  # print(G.in_edge_form(curr_sp))
+  curr_sp_len = G.curr_shortest_path_len
+  scores = [0.0]*len(feas_actions)
+  for (j, action) in enumerate(feas_actions):
+    # edge = env.edge_from_action(action)
+    gt_edge = env.gt_edge_from_action(action)
+    edge = (gt_edge.source(), gt_edge.target())
+    if env.G.edge_properties['status'][gt_edge] == 0:
+      G.update_edge(edge, 0)
+      new_sp = G.curr_shortest_path
+      if len(new_sp) > 0:
+        new_sp_len = G.curr_shortest_path_len
+        reward = new_sp_len-curr_sp_len
+      else: reward = np.inf
+      scores[j] = reward
+      G.update_edge(edge, -1)
+  # print('length oracle score'), scores
+  return scores
