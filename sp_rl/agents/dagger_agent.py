@@ -120,12 +120,8 @@ class DaggerAgent(Agent):
         print('Re-initialized policy parameters')
         policy_curr.model.print_parameters()
       
-      # print('Parameters before training')
-      # policy_curr.model.print_parameters()
+
       curr_train_loss = policy_curr.train(D, self.train_epochs)
-      # print('Parameters after training')
-      # policy_curr.model.print_parameters()
-      # raw_input('..')
       dataset_size_per_iter.append(len(D))
       state_dict_per_iter[i] = deepcopy(policy_curr.model.state_dict())
       # print('Running validation')

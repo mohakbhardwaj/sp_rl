@@ -91,7 +91,7 @@ class HeuristicAgent(Agent):
     edge_widths={}
     edge_colors={}
     for i in path:
-      edge_widths[i] = 4.0
+      edge_widths[i] = 5.0
       edge_colors[i] = str(0.4)
       if i == act_id:
         edge_widths[i] = 7.0

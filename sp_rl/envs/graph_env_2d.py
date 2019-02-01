@@ -6,6 +6,7 @@ import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
 import matplotlib.pyplot as plt
+plt.style.use('seaborn-paper')
 import numpy as np
 import networkx as nx
 from graph_tool.all import *
@@ -170,7 +171,7 @@ class GraphEnv2D(gym.Env):
       while not solvable:
         self.world_num = self.world_arr[self.curr_idx]
         # print self.curr_idx
-        # self.world_num = 17
+        self.world_num = 19
         self.curr_idx = (self.curr_idx + 1) % self.max_envs
         self.curr_edge_stats = self.edge_statuses[self.world_num-self.file_idxing, :] #Sample a random world from the dataset
         self.reinit_graph_status(self.curr_edge_stats)
@@ -184,7 +185,7 @@ class GraphEnv2D(gym.Env):
       # print self.im_num
       im_name = str(self.im_num)
       # print self.im_num
-      # print self.curr_idx, self.world_num, im_name
+      print self.curr_idx, self.world_num, im_name
       if self.file_idxing == 1: im_name = "world_" + str(self.im_num)
       self.img = np.flipud(plt.imread(os.path.join(self.dataset_folder, "environment_images/"+im_name+".png")))
     if self.render_called:
@@ -202,9 +203,9 @@ class GraphEnv2D(gym.Env):
       if i in edge_widths:
         edge_width_list.append(edge_widths[i])
       elif self.obs[i] != -1:
-        edge_width_list.append(2.0)
+        edge_width_list.append(2.5)
       else:
-        edge_width_list.append(1.0)
+        edge_width_list.append(0.5)
 
       if i in edge_colors and self.obs[i] == -1:
         edge_color_list.append(edge_colors[i])
@@ -218,7 +219,7 @@ class GraphEnv2D(gym.Env):
       self.render_called = True
     self.ax.clear()
     self.ax.imshow(self.img, interpolation='nearest', origin='lower', extent=[0,1,0,1], cmap='gray')
-    nx.draw_networkx_edges(self.Gdraw, self.pos, ax=self.ax, edge_color=edge_color_list, width=edge_width_list, alpha=0.4)
+    nx.draw_networkx_edges(self.Gdraw, self.pos, ax=self.ax, edge_color=edge_color_list, width=edge_width_list, alpha=0.6)
     nx.draw_networkx_nodes(self.Gdraw, self.pos, ax=self.ax, nodelist=[self.source_node, self.target_node], node_color=['b', 'g'], node_size=20)
     self.fig.canvas.draw()
     # graph_draw(self.G, self.G.vp["pos"])

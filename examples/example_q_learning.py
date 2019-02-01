@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import gym
 import sp_rl
-from sp_rl.agents import LinearQAgent, GraphWrapper
+from sp_rl.agents import QLearningAgent, GraphWrapper
 
 
 def main(args):
