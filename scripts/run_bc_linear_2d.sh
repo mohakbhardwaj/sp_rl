@@ -13,7 +13,7 @@ folders=(${base_folder}'dataset_2d_1/bc_linear_new' ${base_folder}'dataset_2d_2/
          ${base_folder}'dataset_2d_7/bc_linear_new' ${base_folder}'dataset_2d_8/bc_linear_new'${base_folder}'dataset_herb_4/bc_linear_new' \
          ${base_folder}'dataset_herb_5/bc_linear')
 
-run_idxs=(0 1 2 3)
+run_idxs=(8 9)
 # 5 6 7 8 9)
 
 printf "Changing directories"

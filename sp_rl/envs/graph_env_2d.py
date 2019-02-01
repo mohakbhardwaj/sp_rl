@@ -169,7 +169,7 @@ class GraphEnv2D(gym.Env):
     if not self.first_reset:
       while not solvable:
         if self.mode == "train":
-          self.world_num = np.random.choice(self.world_arr)
+          self.world_num = self.world_arr[self.curr_idx]#np.random.choice(self.world_arr)
         else:
           self.world_num = self.world_arr[self.curr_idx]
         # print self.curr_idx
