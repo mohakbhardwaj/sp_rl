@@ -5,8 +5,8 @@ valid_envs=('graphEnvHerbValidation-v1' 'graphEnvHerbValidation-v2' 'graphEnvHer
 
 
 base_folder='../../rss_sp_rl/experiments/rss_lsp_datasets/'
-folders=(${base_folder}'dataset_herb_1/dagger_linear_hrfull' ${base_folder}'dataset_herb_2/dagger_linear_hrfull' ${base_folder}'dataset_herb_3/dagger_linear_hrfull'\
-         ${base_folder}'dataset_herb_4/dagger_linear_hrfull' ${base_folder}'dataset_herb_5/dagger_linear_hrfull')
+folders=(${base_folder}'dataset_herb_1/dagger_linear_hr_new' ${base_folder}'dataset_herb_2/dagger_linear_hr_new' ${base_folder}'dataset_herb_3/dagger_linear_hr_new'\
+         ${base_folder}'dataset_herb_4/dagger_linear_hr_new' ${base_folder}'dataset_herb_5/dagger_linear_hr_new')
 
 run_idxs=(3 4)
 heuristics=('select_prior' 'select_forward' 'select_backward' 'select_backward' 'select_backward')

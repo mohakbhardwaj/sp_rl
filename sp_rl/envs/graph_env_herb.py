@@ -143,18 +143,18 @@ class GraphEnvHerb(gym.Env):
     solvable = False
     if not self.first_reset:
       while not solvable:
-        self.world_num = self.world_arr[self.curr_idx]
+        if self.mode == "train":
+          self.world_num = np.random.choice(self.world_arr)
+        else:
+          self.world_num = self.world_arr[self.curr_idx]
         self.curr_idx = (self.curr_idx + 1) % self.max_envs
         self.curr_edge_stats = self.edge_statuses[self.world_num-self.file_idxing, :] #Sample a random world from the dataset
         self.reinit_graph_status(self.curr_edge_stats)
         self.sp, self.sp_edge = shortest_path(self.G, self.G.vertex(self.source_node), self.G.vertex(self.target_node), self.G.edge_properties['weight'])
-        # print self.sp
         if len(self.sp) > 0:
           solvable=True
         # print "Environment is solvable - ", solvable
-    # if self.render_called:
-    #   plt.close(self.fig)
-    #   self.render_called = False
+      # print self.world_num
     graph_info = {'adj_mat':self.adj_mat, 'pos': None, 'edge_priors':self.edge_priors, 'source_node':self.source_node, 'target_node':self.target_node}
     self.first_reset = False
     return self.obs,  graph_info
@@ -165,11 +165,6 @@ class GraphEnvHerb(gym.Env):
 
   def seed(self, seed=None):
     np.random.seed(seed)
-
-  # def close(self):
-  #   if self.render_called:
-  #     plt.close(self.fig)
-  #     self.render_called = False
     
   def eval_path(self, path):
     path_edges = self.to_edge_path(path)

@@ -13,6 +13,7 @@ folders=(${base_folder}'dataset_2d_1/dagger_linear' ${base_folder}'dataset_2d_2/
 
 run_idxs=(6)
 
+
 printf "Changing directories"
 echo `pwd`
 cd ../examples

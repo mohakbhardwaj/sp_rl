@@ -169,7 +169,10 @@ class GraphEnv2D(gym.Env):
     solvable = False
     if not self.first_reset:
       while not solvable:
-        self.world_num = self.world_arr[self.curr_idx]
+        if self.mode == "train":
+          self.world_num = self.world_arr[self.curr_idx]#np.random.choice(self.world_arr)
+        else:
+          self.world_num = self.world_arr[self.curr_idx]
         # print self.curr_idx
         self.world_num = 19
         self.curr_idx = (self.curr_idx + 1) % self.max_envs
@@ -185,7 +188,6 @@ class GraphEnv2D(gym.Env):
       # print self.im_num
       im_name = str(self.im_num)
       # print self.im_num
-      print self.curr_idx, self.world_num, im_name
       if self.file_idxing == 1: im_name = "world_" + str(self.im_num)
       self.img = np.flipud(plt.imread(os.path.join(self.dataset_folder, "environment_images/"+im_name+".png")))
     if self.render_called:

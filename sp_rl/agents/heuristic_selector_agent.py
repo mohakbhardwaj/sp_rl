@@ -138,22 +138,6 @@ class HeuristicAgent(Agent):
     return feas_actions[np.argmax(h)]
   
   def select_lookahead_len(self, feas_actions, iter, G):
-    # k_sp_nodes, k_sp, k_sp_len = G.curr_k_shortest()
-    # scores = [0]*len(feas_actions)
-    # print k_sp[0], G.curr_sp, len(k_sp)
-    # for j, action in enumerate(feas_actions):
-    #   edge = self.env.edge_from_action(action)
-    #   # print "edge", edge, self.env.G[edge[0]][edge[1]]['status']
-    #   if self.env.G[edge[0]][edge[1]]['status'] == 0:
-    #     #do something
-    #     for sp in k_sp:
-    #       if (edge[0],edge[1]) in sp or (edge[1],edge[0]) in sp:
-    #         scores[j] += 1
-    #   else:
-    #     continue
-    # # print scores
-    # return feas_actions[np.argmax(scores)]
-
     edges = list(map(self.env.edge_from_action, feas_actions))
     delta_lens, delta_progs = G.get_utils(edges)
     # print delta_lens
@@ -161,22 +145,6 @@ class HeuristicAgent(Agent):
     return feas_actions[idx_lens]
 
   def select_lookahead_prog(self, feas_actions, iter, G):
-    # k_sp_nodes, k_sp, k_sp_len = G.curr_k_shortest()
-    # scores = [0]*len(feas_actions)
-    # print k_sp[0], G.curr_sp, len(k_sp)
-    # for j, action in enumerate(feas_actions):
-    #   edge = self.env.edge_from_action(action)
-    #   # print "edge", edge, self.env.G[edge[0]][edge[1]]['status']
-    #   if self.env.G[edge[0]][edge[1]]['status'] == 0:
-    #     #do something
-    #     for sp in k_sp:
-    #       if (edge[0],edge[1]) in sp or (edge[1],edge[0]) in sp:
-    #         scores[j] += 1
-    #   else:
-    #     continue
-    # # print scores
-    # return feas_actions[np.argmax(scores)]
-
     edges = list(map(self.env.edge_from_action, feas_actions))
     delta_lens, delta_progs = G.get_utils(edges)
     idx_prog = np.argmax(delta_progs)
