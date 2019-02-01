@@ -8,12 +8,13 @@ valid_envs=('graphEnv2DTest-v1' 'graphEnv2DTest-v2' 'graphEnv2DTest-v3' 'graphEn
 
 
 base_folder='../../rss_sp_rl/experiments/rss_lsp_datasets/'
-folders=(${base_folder}'dataset_2d_1/bc_linear' ${base_folder}'dataset_2d_2/bc_linear' ${base_folder}'dataset_2d_3/bc_linear'\
-         ${base_folder}'dataset_2d_4/bc_linear' ${base_folder}'dataset_2d_5/bc_linear' ${base_folder}'dataset_2d_6/bc_linear'\
-         ${base_folder}'dataset_2d_7/bc_linear' ${base_folder}'dataset_2d_8/bc_linear'${base_folder}'dataset_herb_4/bc_linear' \
+folders=(${base_folder}'dataset_2d_1/bc_linear_new' ${base_folder}'dataset_2d_2/bc_linear_new' ${base_folder}'dataset_2d_3/bc_linear_new'\
+         ${base_folder}'dataset_2d_4/bc_linear_new' ${base_folder}'dataset_2d_5/bc_linear_new' ${base_folder}'dataset_2d_6/bc_linear_new'\
+         ${base_folder}'dataset_2d_7/bc_linear_new' ${base_folder}'dataset_2d_8/bc_linear_new'${base_folder}'dataset_herb_4/bc_linear_new' \
          ${base_folder}'dataset_herb_5/bc_linear')
 
-run_idxs=(0 1 2 3 5 6 7 8 9)
+run_idxs=(0 1 2 3)
+# 5 6 7 8 9)
 
 printf "Changing directories"
 echo `pwd`
@@ -36,7 +37,7 @@ weight_decay=0.2
 seed_val=0
 
 # #
-for ((i=7;i<${#run_idxs[@]};++i)); do
+for ((i=0;i<${#run_idxs[@]};++i)); do
   idx=run_idxs[i]
   printf idx
   printf "====Train Environment %s Validation Environment %s Folder %s\n" "${train_envs[idx]}" "${valid_envs[idx]}" "${folders[idx]} ===="

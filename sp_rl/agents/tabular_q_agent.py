@@ -15,7 +15,7 @@ class QTableAgent(Agent):
     self.alpha = alpha
     self.Q = np.zeros((self.env.observation_space.n, self.env.action_space.n), dtype=np.float32) - self.env.action_space.n #Initialize Q table
     _, self.graph_info = self.env.reset()
-    self.G = Graph(self.graph_info['adj_mat'], self.graph_info['source_node'], self.graph_info['target_node'], ftr_params=dict(k=75), pos=self.graph_info['pos'], edge_priors=self.graph_info['edge_priors'])
+    self.G = GraphWrapper(self.graph_info['adj_mat'], self.graph_info['source_node'], self.graph_info['target_node'], ftr_params=dict(k=75), pos=self.graph_info['pos'], edge_priors=self.graph_info['edge_priors'])
 
     
   def train(self, num_episodes, num_exp_episodes, render=False):
@@ -33,6 +33,7 @@ class QTableAgent(Agent):
       if i >= num_exp_episodes:
         eps = self.eps0/(i+1.0) #Decay epsilon after the exploration phase is over
       done = False
+      j = 0
       while not done:
         print('Curr episode = {}'.format(i+1))
         s = self.env.obs_to_id(obs)
@@ -47,9 +48,8 @@ class QTableAgent(Agent):
           act_id = np.random.choice(feas_actions) #Choose a random unevaluated edge from the path
           print "random action"
         act_e = self.env.edge_from_action(act_id)
-        ftrs = self.G.get_features([act_e])
         obs, reward, done, info = self.env.step(act_id)
-        print ('Q_vals = {}, feasible_actions = {}, chosen edge = {}, features = {}'.format(self.Q[s,:], feas_actions, act_e, ftrs))
+        print ('Q_vals = {}, feasible_actions = {}, chosen edge = {}'.format(self.Q[s,:], feas_actions, act_e))
         # print('obs = {}, reward = {}, done = {}'.format(obs, reward, done))
         #Update Q values here
         self.G.update_edge(act_e, obs[act_id])#Update the edge weight according to the result
@@ -60,6 +60,7 @@ class QTableAgent(Agent):
         Q_t = np.max(self.Q[sd,feas_actions_d]) if len(feas_actions_d) > 0 else 0
         self.Q[s][act_id] = self.Q[s][act_id] + self.alpha * (reward + self.gamma * Q_t - self.Q[s][act_id])
         ep_reward += reward
+        j = j + 1
         if render:
           self.render_env(obs, path)
 
