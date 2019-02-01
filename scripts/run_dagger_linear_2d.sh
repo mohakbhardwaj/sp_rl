@@ -7,11 +7,11 @@ valid_envs=('graphEnv2DValidation-v1' 'graphEnv2DValidation-v2' 'graphEnv2DValid
 
 
 base_folder='../../rss_sp_rl/experiments/rss_lsp_datasets/'
-folders=(${base_folder}'dataset_2d_1/dagger_linear_new' ${base_folder}'dataset_2d_2/dagger_linear_new' ${base_folder}'dataset_2d_3/dagger_linear_new'\
-         ${base_folder}'dataset_2d_4/dagger_linear_new' ${base_folder}'dataset_2d_5/dagger_linear_new' ${base_folder}'dataset_2d_6/dagger_linear_new'\
-         ${base_folder}'dataset_2d_7/dagger_linear_new' ${base_folder}'dataset_2d_8/dagger_linear_new')
+folders=(${base_folder}'dataset_2d_1/dagger_linear_new_0.01' ${base_folder}'dataset_2d_2/dagger_linear_new_0.01' ${base_folder}'dataset_2d_3/dagger_linear_new_0.01'\
+         ${base_folder}'dataset_2d_4/dagger_linear_new_0.01' ${base_folder}'dataset_2d_5/dagger_linear_new_0.01' ${base_folder}'dataset_2d_6/dagger_linear_new_0.01'\
+         ${base_folder}'dataset_2d_7/dagger_linear_new_0.01' ${base_folder}'dataset_2d_8/dagger_linear_new_0.01')
 
-run_idxs=(1 2 3)
+run_idxs=(6 7)
 
 printf "Changing directories"
 echo `pwd`
@@ -27,7 +27,7 @@ num_test_episodes=200
 model='linear'
 expert='length_oracle'
 beta0=0.7
-alpha=0.001
+alpha=0.01
 batch_size=32
 epochs=3
 weight_decay=0.2
