@@ -9,7 +9,7 @@ valid_envs=('graphEnv2DValidation-v1' 'graphEnv2DValidation-v2' 'graphEnv2DValid
 base_folder='../../rss_sp_rl/experiments/rss_lsp_datasets/'
 folders=(${base_folder}'dataset_2d_1/dagger_linear' ${base_folder}'dataset_2d_2/dagger_linear' ${base_folder}'dataset_2d_3/dagger_linear'\
          ${base_folder}'dataset_2d_4/dagger_linear' ${base_folder}'dataset_2d_5/dagger_linear' ${base_folder}'dataset_2d_6/dagger_linear'\
-         ${base_folder}'dataset_2d_7/dagger_linear_data' ${base_folder}'dataset_2d_8/dagger_linear')
+         ${base_folder}'dataset_2d_7/dagger_linear_converge' ${base_folder}'dataset_2d_8/dagger_linear')
 
 run_idxs=(6)
 
@@ -20,15 +20,15 @@ cd ../examples
 echo `pwd`
 
 
-num_iters=5
+num_iters=10
 epsiodes_per_iter=20
 num_valid_episodes=0
-num_test_episodes=200
+num_test_episodes=0
 
 model='linear'
 expert='length_oracle'
 beta0=0.7
-alpha=0.01
+alpha=0.001
 batch_size=32
 epochs=3
 weight_decay=0.2

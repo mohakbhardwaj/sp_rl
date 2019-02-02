@@ -42,6 +42,8 @@ class DaggerAgent(Agent):
     validation_avg_reward = []
     dataset_size_per_iter = []
     state_dict_per_iter = {}
+    features_per_iter = {}
+    labels_per_iter = {}
 
     D = ExperienceBuffer() 
     policy_curr = deepcopy(self.policy)
@@ -49,6 +51,8 @@ class DaggerAgent(Agent):
     curr_median_reward = -np.inf
     for i in xrange(num_iterations):
       iter_rewards = []
+      Xdata = []
+      Ydata = []
       if i == 0:
         beta = 1.0 #Rollout with expert initially
       else:
@@ -71,13 +75,14 @@ class DaggerAgent(Agent):
           if render:
             self.render_env(self.train_env, path, probs)
           done = False
-
+          
           while not done:
             print('Current iteration = {}, Iter episode = {}, Timestep = {}, beta = {}, Curr median reward = {}'.format(i+1, k+1, j, beta, curr_median_reward))
             path = self.get_path(self.G)
             feas_actions = self.filter_path(path, obs) #Only select from unevaluated edges in shortest path
             ftrs = torch.tensor(self.G.get_features([self.train_env.edge_from_action(a) for a in feas_actions], j))
             probs = policy_curr.predict(ftrs)  
+            ftrsl = self.G.get_features([self.train_env.edge_from_action(a) for a in feas_actions], j).tolist()
             #Do random tie breaking
             probs = probs.detach().numpy()
             # print feas_actions, probs, ftrs
@@ -92,6 +97,13 @@ class DaggerAgent(Agent):
                 idmix = idx_heuristic
             #Aggregate the data
             D.push(ftrs, torch.tensor([idx_exp]))
+            
+            for id in xrange(len(feas_actions)):
+              Xdata.append(ftrsl[id])
+              if id == idx_exp:
+                Ydata.append(1)
+              else:
+                Ydata.append(0)
             #Execute mixture
             if np.random.sample() > beta:
               idx = idx_l 
@@ -120,10 +132,12 @@ class DaggerAgent(Agent):
         print('Re-initialized policy parameters')
         policy_curr.model.print_parameters()
       
-
+      
       curr_train_loss = policy_curr.train(D, self.train_epochs)
       dataset_size_per_iter.append(len(D))
       state_dict_per_iter[i] = deepcopy(policy_curr.model.state_dict())
+      features_per_iter[i] = Xdata
+      labels_per_iter[i] = Ydata
       # print('Running validation')
       #Doing validation if num_valid episodes > 0
       if num_valid_episodes == 0:
@@ -150,7 +164,7 @@ class DaggerAgent(Agent):
       train_loss.append(curr_train_loss)
       train_avg_loss.append(sum(train_loss)*1.0/(i+1.0))
     # print self.qfun.model.fc.weight
-    return train_rewards, train_avg_rewards, train_loss, train_avg_loss, validation_reward, validation_std, validation_avg_reward, dataset_size_per_iter, state_dict_per_iter
+    return train_rewards, train_avg_rewards, train_loss, train_avg_loss, validation_reward, validation_std, validation_avg_reward, dataset_size_per_iter, state_dict_per_iter, features_per_iter, labels_per_iter
 
 
   def test(self, env, policy, num_episodes, render=False, step=False):

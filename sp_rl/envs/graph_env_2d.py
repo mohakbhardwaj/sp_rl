@@ -174,7 +174,7 @@ class GraphEnv2D(gym.Env):
         else:
           self.world_num = self.world_arr[self.curr_idx]
         # print self.curr_idx
-        self.world_num = 19
+        # self.world_num = 19
         self.curr_idx = (self.curr_idx + 1) % self.max_envs
         self.curr_edge_stats = self.edge_statuses[self.world_num-self.file_idxing, :] #Sample a random world from the dataset
         self.reinit_graph_status(self.curr_edge_stats)

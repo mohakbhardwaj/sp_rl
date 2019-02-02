@@ -17,7 +17,9 @@ class ExperienceBuffer(Dataset):
     """Saves a transition."""
     if len(self.memory) < self.capacity:
         self.memory.append(None)
-    self.memory[self.position] = (args[0], args[1])#, args[2], args[3])
+
+
+    self.memory[self.position] = (args[0], args[1], args[2])#, args[3])
     if self.capacity < np.inf:
       self.position = (self.position + 1) % self.capacity
     else:

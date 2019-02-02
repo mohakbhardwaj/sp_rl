@@ -10,14 +10,14 @@ from sp_rl.learning import LinearNet, ExperienceBuffer
 
 class QLearningAgent(Agent):
   def __init__(self, env, qfun, G, eps0, epsf, min_data):
-    super(LinearQAgent, self).__init__(env)
+    super(QLearningAgent, self).__init__(env)
     self.env = env
     self.eps0 = eps0
     self.epsf = epsf
-    self.gamma = gamma
+    print self.epsf
     # _, self.graph_info = self.env.reset()
     self.G = G
-    self.qfun = qfun
+    self.q_fun = qfun
     # self.num_weights = self.G.num_features
     # w_init = np.random.rand(self.num_weights, 1)
     # self.w_init = w_init#np.ones(shape=(self.num_weights, 1))
@@ -26,22 +26,26 @@ class QLearningAgent(Agent):
 
 
   def train(self, num_episodes, num_exp_episodes, render=False, step=True):
-    train_rewards_dict = {}
+    train_rewards=[]
     train_avg_rewards = []
     train_loss = []
     train_avg_loss = []
+    # print self.eps0, self.epsf, num_exp_episodes
     eps_sc = self.eps_schedule(num_exp_episodes, self.eps0, self.epsf)
     self.env.reset(roll_back=True)
     D = ExperienceBuffer() 
     
     for i in xrange(num_episodes):
       j = 0
+      if i%20 == 0:
+        obs, _ = self.env.reset(roll_back=True)
+      
       obs, _ = self.env.reset()
       self.G.reset()
       path = self.get_path(self.G)
       ftrs = torch.tensor(self.G.get_features([self.env.edge_from_action(a) for a in path], j))
       q_vals = self.q_fun.predict(ftrs)
-      qvals = qvals.detach().numpy()
+      q_vals = q_vals.detach().numpy()
       if render:
         self.render_env(self.env, path, q_vals)
       
@@ -52,10 +56,9 @@ class QLearningAgent(Agent):
         eps = eps_sc[i]
       else:
         eps = self.epsf
-
+      
       done = False
       while not done:
-        print('Curr episode = {}'.format(i+1))
         path = self.get_path(self.G)
         feas_actions = self.filter_path(path, obs) #Only select from unevaluated edges in shortest path
         ftrs = torch.tensor(self.G.get_features([self.env.edge_from_action(a) for a in feas_actions], j))
@@ -75,27 +78,32 @@ class QLearningAgent(Agent):
         act_ftrs = ftrs[idx]
         
         obs,reward, done, info = self.env.step(act_id)
-        print ('Q_vals = {}, feasible_actions = {}, chosen edge = {}, features = {}'.format(q_vals, feas_actions, act_e, ftrs))
+        # print ('Q_vals = {}, feasible_actions = {}, chosen edge = {}, features = {}'.format(q_vals, feas_actions, act_e, ftrs))
         self.G.update_edge(act_e, obs[act_id]) #Update agent's internal graph
         
         #calculate best next action and push to buffer
-        pathd = self.get_path(self.G)
-        feas_actionsd = self.filter_path(pathd, obs)
-        ftrsd = torch.tensor(self.G.get_features([self.env.edge_from_action(a) for a in feas_actionsd], j))
-        q_valsd = self.q_fun.predict(ftrs)
-        q_valsd = q_valsd.detach().numpy()
-        act_ftrsd = q_valsd[np.argmax(q_valsd)]
-        # target = self.get_q_target(reward, pathd, obs, j+1)
-        D.push(act_ftrs, reward, ftrsd)
+        if not done:
+          pathd = self.get_path(self.G)
+          feas_actionsd = self.filter_path(pathd, obs)
+          ftrsd = torch.tensor(self.G.get_features([self.env.edge_from_action(a) for a in feas_actionsd], j))
+          q_valsd = self.q_fun.predict(ftrs)
+          q_valsd = q_valsd.detach().numpy()
+          act_ftrsd = q_valsd[np.argmax(q_valsd)]
+          # target = self.get_q_target(reward, pathd, obs, j+1)
+          D.push(act_ftrs, reward, ftrsd)
+        else:
+          D.push(act_ftrs, reward, act_ftrs.unsqueeze(0))
 
         if len(D) >= self.q_fun.batch_size:
           train_loss = self.q_fun.train(D)
         ep_reward += reward
         j += 1
-        
+      print('Curr episode = {}'.format(i+1))
+      print('Episode reward = %d'%(ep_reward))
+      train_rewards.append(ep_reward)
 
       # train_avg_loss.append(sum(train_loss)*1.0/(i+1.0))
-      train_rewards_dict[i] = ep_reward
+      # train_rewards_dict[i] = ep_reward
       # train_avg_rewards.append(sum(train_rewards)*1.0/(i+1.0))
       
     return train_rewards#, train_avg_rewards #train_loss, train_avg_loss
@@ -133,7 +141,7 @@ class QLearningAgent(Agent):
 
         act_e = self.env.edge_from_action(act_id)
         act_q = q_vals[idx]
-        print ('Q_vals = {}, feasible_actions = {}, chosen edge = {}, features = {}'.format(q_vals, feas_actions, act_e, ftrs))
+        # print ('Q_vals = {}, feasible_actions = {}, chosen edge = {}, features = {}'.format(q_vals, feas_actions, act_e, ftrs))
         if step: raw_input('Press enter to execute action')
         obs, reward, done, info = self.env.step(act_id)
         # print ('obs = {}, reward = {}, done = {}'.format(obs, reward, done))
@@ -205,7 +213,6 @@ class QLearningAgent(Agent):
 
   def get_random_action(self, feas_actions, G):
     idx = np.random.randint(len(feas_actions)) #select purely random action
-    # print idx
     return idx
 
 

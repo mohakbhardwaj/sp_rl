@@ -28,6 +28,7 @@ def main(args):
 
   test_rewards     = [it[1] for it in sorted(test_rewards_dict.items(), key=operator.itemgetter(0))]
   test_avg_rewards = [it[1] for it in sorted(test_avg_rewards_dict.items(), key=operator.itemgetter(0))]
+  print test_rewards
   # print len(test_rewards)
   # print test_rewards
   # print test_avg_rewards

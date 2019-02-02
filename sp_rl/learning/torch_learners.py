@@ -25,57 +25,66 @@ class QFunction():
   def predict(self, ftrs):
     return self.model(ftrs)
 
+  def collate_fn(self, batch):
+    action = [item[0] for item in batch]
+    reward = [item[1] for item in batch]
+    next_state = [item[2] for item in batch]
+    # target = torch.LongTensor(target)
+    return [action, reward, next_state]
 
-  def train(self, D, gamma = 0.9, epochs=2):
+  def train(self, D, gamma = 1.0, epochs=2):
     trainloader = DataLoader(D, batch_size=self.batch_size,
-                             shuffle=True, num_workers=0)
+                               shuffle=True,
+                               collate_fn=self.collate_fn, 
+                               num_workers=0)
     data_pts = len(D)
     num_batches = float(data_pts/self.batch_size)
     if num_batches == 0.0: num_batches = 1
     avg_loss = 0.0
-    print num_batches, data_pts, epochs
+    # print num_batches, data_pts, epochs
     
     if self.train_method == 'supervised':
       for epoch in xrange(epochs):
         running_loss = 0.0
         for i, data in enumerate(trainloader,0):
-            actions, targets = data
-            # for i in xrange(actions.shape[0]):
-              # print actions[i,:], targets[i,:]
-          #zero the parameter gradients
+          actions, targets = data
           self.optimizer.zero_grad()
           outputs = self.model(actions)
-
           loss = self.criterion(outputs, targets)
           loss.backward()
           self.optimizer.step()
 
-          #print statistics
           running_loss += loss.item()
           # if i % 10 == 9:
           #   print('[%d, %5d] loss: %.3f' %
           #           (epoch + 1, i + 1, running_loss / (epoch*num_batches + i*1.0)))
           # raw_input('...')
         
-        avg_loss += running_loss
+          avg_loss += running_loss
       
       avg_loss = avg_loss/(epochs*num_batches*1.0)
       print 'Average loss = '.format(avg_loss)
-  elif self.train_method == 'reinforcement':
-    action, reward, next_state = data
-    q_val_b = self.predict(action[i])
-    loss = 0.0
-    target_b = []
-    for i in xrange(len(next_state)):
-      q_valsd = self.predict(next_state[i])
-      best_q = torch.max(q_valsd)
-      target = reward + gamma * best_q
-      target_b.append(target)
-    
-    self.optimizer.zero_grad()
-    loss = self.criterion(q_val_b, torch.tensor(target_b))
-    loss.backward()
-    self.optimizer.step()
+    elif self.train_method == 'reinforcement':
+      data = next(iter(trainloader))
+      action, reward, next_state = data
+
+      loss = 0.0
+      target_b = []
+      for i in xrange(len(next_state)):
+        # print action[i]
+        # print next_state[i].shape
+
+        q_val_b = self.predict(action[i].unsqueeze(0))
+        q_valsd = self.predict(next_state[i])
+        best_q = torch.max(q_valsd)
+        target = reward[i] + gamma * best_q
+        # print  target
+        target_b.append(target)
+      
+      self.optimizer.zero_grad()
+      loss = self.criterion(q_val_b, torch.tensor(target_b))
+      loss.backward()
+      self.optimizer.step()
 
     return loss.item()
 

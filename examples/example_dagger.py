@@ -64,7 +64,7 @@ def main(args):
     # print args.num_iters, args.num_episodes_per_iter
     rewards, avg_rewards, train_loss, train_avg_loss, validation_rewards, \
     validation_stds, validation_avg_reward, data_points_per_iter, \
-    state_dict_per_iter = agent.train(args.num_iters, args.num_episodes_per_iter, args.num_valid_episodes, heuristic=args.heuristic, re_init=args.re_init, mixed_rollin=args.mixed_rollin)
+    state_dict_per_iter, features_per_iter, labels_per_iter = agent.train(args.num_iters, args.num_episodes_per_iter, args.num_valid_episodes, heuristic=args.heuristic, re_init=args.re_init, mixed_rollin=args.mixed_rollin)
     num_train_episodes = args.num_iters * args.num_episodes_per_iter
     # print('(Training) Number of episodes = {}, Total Reward = {}, Average reward = {}, \
     #         Best validation reward = {}, Train time = {}'.format(num_train_episodes, \
@@ -97,6 +97,14 @@ def main(args):
       st_dct = state_dict_per_iter[s]
       file_name = model_str + "_" + 'policy_int_' + str(s)
       torch.save(st_dct, os.path.abspath(args.folder)  + "/" + file_name)
+    
+    for it in features_per_iter:
+      file_name_f = "features_" + str(it)
+      file_name_l = "labels_" + str(it)
+      with open(os.path.abspath(args.folder) + '/' + file_name_f, 'w') as fp:
+        json.dump(features_per_iter[it], fp)
+      with open(os.path.abspath(args.folder) + '/' + file_name_l, 'w') as fp:
+        json.dump(labels_per_iter[it], fp)
 
 
     if args.plot:
@@ -154,13 +162,14 @@ def main(args):
   
   test_rewards     = [it[1] for it in sorted(test_rewards_dict.items(), key=operator.itemgetter(0))]
   test_avg_rewards = [it[1] for it in sorted(test_avg_rewards_dict.items(), key=operator.itemgetter(0))]
+  print test_rewards
   test_results = dict()
   test_results['test_rewards'] = test_rewards_dict
   test_results['test_acc'] = test_acc_dict
   print ('Average test rewards = {}'.format(np.mean(test_rewards)))
   print('Dumping results')
-  with open(os.path.abspath(args.folder) + '/test_results.json', 'w') as fp:
-    json.dump(test_results, fp)
+  # with open(os.path.abspath(args.folder) + '/test_results.json', 'w') as fp:
+  #   json.dump(test_results, fp)
 
   print('(Testing) Number of episodes = {}, Total Reward = {}, Average reward = {}, \
           Std. Dev = {}'.format(args.num_test_episodes, sum(test_rewards), \
