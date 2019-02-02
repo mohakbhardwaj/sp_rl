@@ -20,7 +20,7 @@ cd ../examples
 echo `pwd`
 
 
-num_iters=10
+num_iters=20
 epsiodes_per_iter=20
 num_valid_episodes=0
 num_test_episodes=0

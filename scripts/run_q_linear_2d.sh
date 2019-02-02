@@ -21,8 +21,8 @@ echo `pwd`
 
 
 
-num_episodes=200
-num_exp_episodes=70
+num_episodes=400
+num_exp_episodes=100
 
 model='linear'
 expert='length_oracle'
