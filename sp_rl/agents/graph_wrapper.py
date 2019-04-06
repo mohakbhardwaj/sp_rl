@@ -8,31 +8,33 @@ import time
 from copy import deepcopy
 
 class GraphWrapper(object):
-  def __init__(self, adj_mat, source, target, ftr_params=None, pos=None, edge_priors=None, lite_ftrs=True):
-    self.dist_fns = {'euc_dist': self.euc_dist}
+  def __init__(self, adj_mat, source, target, ftr_params=None, pos=None, train_edge_statuses=None, lite_ftrs=True):
+    # self.dist_fns = {'euc_dist': self.euc_dist}
     self.adj_mat = adj_mat
     self.pos = pos
     self.source = source
     self.target = target
-    self.edge_priors = edge_priors
+    self.train_edge_statuses = train_edge_statuses
+    print('Here', self.train_edge_statuses.shape)
     self.G = self.to_graph_tool(self.adj_mat) #Graph(directed=False)
     self.nedges = self.G.num_edges()
     estat = self.G.new_edge_property("int")
     self.G.edge_properties['status'] = estat
-    if pos is not None:
-      vert_pos = self.G.new_vertex_property("vector<double>")
-      self.G.vp['pos'] = vert_pos
-      for v in self.G.vertices():
-        vert_pos[v] = pos[v]
+    # if pos is not None:
+    #   vert_pos = self.G.new_vertex_property("vector<double>")
+    #   self.G.vp['pos'] = vert_pos
+    #   for v in self.G.vertices():
+    #     vert_pos[v] = pos[v]
 
-    if edge_priors is not None:
-      eprior = self.G.new_edge_property("double")
-      self.G.edge_properties['p_free'] = eprior
-    
+    # if edge_priors is not None:
+    #   eprior = self.G.new_edge_property("double")
+    #   self.G.edge_properties['p_free'] = eprior
+    if self.train_edge_statuses is not None:
+      self.edge_prior_vec = self.prior(self.train_edge_statuses)    
     for edge in self.G.edges():
       self.G.edge_properties['status'][edge] = -1
-      if edge_priors is not None:
-        eprior[edge] = edge_priors[(edge.source(), edge.target())]
+      # if edge_priors is not None:
+      #   eprior[edge] = edge_priors[(edge.source(), edge.target())]
     
     self.curr_sp = self.shortest_path(self.source, self.target, 'weight', 'euc_dist')
     self.curr_sp_len = self.path_length(self.in_edge_form(self.curr_sp))
@@ -105,9 +107,14 @@ class GraphWrapper(object):
 
 
   def shortest_path(self, source, target, attr='weight', dist_fn = 'euc_dist'):
-    sp, _ = shortest_path(self.G, self.G.vertex(self.source), self.G.vertex(self.target), self.G.edge_properties['weight'])  
+    sp, _ = shortest_path(self.G, self.G.vertex(source), self.G.vertex(target), self.G.edge_properties['weight'])  
     return sp
   
+  def prior(self, train_edge_stats):
+    return 1.0 - np.mean(train_edge_stats, axis=0)
+    
+
+
   def update_edge(self, edge, status, prev_stat=-1):
     gt_edge = self.G.edge(edge[0], edge[1])
     self.G.edge_properties['status'][gt_edge] = status #update edge status
@@ -167,10 +174,7 @@ class GraphWrapper(object):
       self.total_checked += 1.0
 
   def edge_features(self, edge, idx=-1, num_path_edges=np.inf, itr=0):
-    # attr_dict = self.G[edge[0]][edge[1]]
-    gt_edge = self.G.edge(edge[0], edge[1])
-
-    p_free = self.edge_priors[edge]
+    prior = self.edge_prior_vec[edge]
     forward_score = 1.0
     # backward_score = 1.0
     if num_path_edges > 1:
@@ -186,10 +190,9 @@ class GraphWrapper(object):
     else: alt_oh = forward_oh
 
     delta_len, delta_progress = self.get_edge_util(edge)
-    # raw_input('..')
 
     if self.lite_ftrs:
-      return  np.array([1.0 - p_free, 
+      return  np.array([p_free, 
               forward_score,
               delta_len,
               delta_progress])
@@ -206,8 +209,7 @@ class GraphWrapper(object):
     if self.total_checked > 0:
       valid_checked = self.num_valid_checked/self.total_checked
       invalid_checked = self.num_invalid_checked/self.total_checked
-    # print self.num_invalid_checked, self.total_checked, invalid_checked
-    return np.array([1.0 - p_free, 
+    return np.array([prior, 
                      forward_score,
                      delta_len,
                      delta_progress,
@@ -220,7 +222,8 @@ class GraphWrapper(object):
   # def curr_k_shortest(self):
     # return self.k_sp_nodes, self.k_sp, self.k_sp_len
 
-  def get_features(self, edges, itr):
+
+  def get_features_old(self, edges, itr):
     features = np.array([self.edge_features(edge, i, len(edges), itr) for i, edge in enumerate(edges)])
     #Normalize the delta_len feature
     if self.num_features >=3:
@@ -234,13 +237,40 @@ class GraphWrapper(object):
       features_final = features
     return features_final
 
-  def get_priors(self, edges):
-    priors = []
-    for edge in edges:
-      gt_edge = self.G.edge(edge[0], edge[1])
-      prior = 1.0 - self.G.edge_properties['p_free'][gt_edge]
-      priors.append(prior)
+  def get_features(self, edge_ids, obs, itr):
+    priors = self.edge_prior_vec[idxs]
+    forward_scores = 1.0 - np.arange(edge_ids.size())/edge_ids.size()
+    feature_vecs = np.concatenate(priors, forward_scores)
+    return feature_vecs
+
+  def get_priors(self, idxs):
+    priors = self.edge_prior_vec[idxs]
     return priors
+
+  def get_posterior(self, idxs, obs):
+    """Posterior over edges using current uncovered world to calculate probability of a training world
+       to be the real one.
+       train_edges: N X E binary matrix where N is number of worlds and E is number of edges.
+       obs: 1XE with 0 for known invalid, 1 for known valid and -1 for unknown.
+    """
+    obs_idxs = np.where(obs >= 0)[0] #get idxs of edges that have been checked
+    obs_checked = obs[obs_idxs]
+    train_edges_checked = self.train_edge_statuses[:, obs_idxs]
+    #Calculate deviation between training dataset and current observation  
+    deviation = np.abs(train_edges_checked - obs_checked) 
+    deviation = np.sum(deviation, axis=1)
+    #Calculate probability of each world being true using softmax 
+    scores = -1.0*deviation
+    exp_scores = np.exp(scores)
+    probs = exp_scores/np.sum(exp_scores)
+    #Calculate the posterior (expected value of status of an edge)
+    posterior = self.train_edge_statuses * probs.reshape(probs.shape[0],1)
+    posterior = np.sum(posterior , axis=0)
+    post = 1.0 - posterior[idxs]
+    # print('probs', probs[1])  
+    # print('posterior', post)
+    # print('priors', self.get_priors(idxs))
+    return post    
 
   def get_utils(self, edges):
     delta_lens = []
@@ -302,10 +332,10 @@ class GraphWrapper(object):
     and returns a path as a set of edges""" 
     return [(i,j) for i,j in zip(path[:-1], path[1:])]
 
-  def euc_dist(self, node1, node2):
-    pos1 = np.array(self.G.node[node1]['pos'])
-    pos2 = np.array(self.G.node[node2]['pos'])
-    return np.linalg.norm(pos1 - pos2)
+  # def euc_dist(self, node1, node2):
+  #   pos1 = np.array(self.G.node[node1]['pos'])
+  #   pos2 = np.array(self.G.node[node2]['pos'])
+  #   return np.linalg.norm(pos1 - pos2)
 
   @property
   def curr_shortest_path(self):

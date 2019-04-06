@@ -22,7 +22,7 @@ def main(args):
   if selector in ["select_k_shortest", "select_priorkshortest", "select_lookahead"]:
     ftr_params = dict(k=args.k)
     lite_ftrs = False
-
+  
   agent = HeuristicAgent(env, selector, ftr_params, lite_ftrs)
   test_rewards_dict, test_avg_rewards_dict, avg_time = agent.test(args.num_episodes, render=args.render, step=args.step)
 
@@ -70,8 +70,7 @@ if __name__ == "__main__":
   parser.add_argument('--heuristic', type=str, required=True)
   parser.add_argument('--num_episodes', type=int, required=True)
   parser.add_argument('--k', type=int)
-  parser.add_argument('--render', action='store_true',
-                      help='Render during testing')
+  parser.add_argument('--render', action='store_true', help='Render during testing')
   parser.add_argument("--step", action='store_true', help='If true, then agent pauses before executing each action to show rendering')
   parser.add_argument("--folder", type=str, required=True, help='Folder to store plots in')
   parser.add_argument("--seed_val", type=int, required=True, help='Seed value')
