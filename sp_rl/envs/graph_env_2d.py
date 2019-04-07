@@ -30,11 +30,9 @@ class GraphEnv2D(gym.Env):
     self.mode = mode
     self.file_idxing = file_idxing
     self.nnodes, self.nedges, self.G, self.adj_mat, self.pos, self.action_to_edge_tup, self.action_to_gt_edge, self.edge_tup_to_action, self.action_to_edge_id, self.edge_weights, self.vert_pos, self.Gdraw = self.initialize_graph(dataset_folder) 
-    self.source_node, self.target_node, self.edge_statuses, self.num_worlds = self.initialize_world_distrib(dataset_folder)#, self.data_idxs)
+    self.source_node, self.target_node, self.edge_statuses = self.initialize_world_distrib(dataset_folder)#, self.data_idxs)
     # self.edge_priors = self.calculate_edge_priors()
     self.train_edge_statuses = self.edge_statuses[0:self.metadata['max_train_envs'], :]
-    print self.train_edge_statuses.shape
-    print self.nedges
     #Randomly shuffle the worlds
     self.curr_idx = 0
     self.first_reset = True
@@ -99,7 +97,6 @@ class GraphEnv2D(gym.Env):
     
 
     adj_mat = adjacency(G, edge_weights).todense()
-    # print('Assigning coordinate positions to nodes')
     pos = {}
     for i in xrange(len(pos_lines)):
       s = pos_lines[i].split(',')
@@ -116,7 +113,7 @@ class GraphEnv2D(gym.Env):
     edge_stats = edge_stats[:, list(self.action_to_edge_id.values())]
     with open(os.path.join(folder, "start_idx.dat")) as f: source_node = int(f.read().splitlines()[0].split()[0]) - 1
     with open(os.path.join(folder, "goal_idx.dat")) as f: target_node = int(f.read().splitlines()[0].split()[0])  - 1
-    return source_node, target_node, edge_stats, edge_stats.shape[0]#, edge_stats_full
+    return source_node, target_node, edge_stats#, edge_stats_full
   
   def reinit_graph_status(self, edge_stats):
     for a,edge in self.action_to_gt_edge.iteritems():
@@ -141,7 +138,6 @@ class GraphEnv2D(gym.Env):
   def step(self, action):
     done = False
     reward = -1
-    # result = self.curr_edge_stats[action] #self.G.edge_properties['status'][gt_edge] #Check edge for validity
     self.obs[action] = self.curr_edge_stats[action] #result #Update the observation
     if self.eval_path(self.sp): #If the agent has discovered the shortest path, episode ends
       done = True
@@ -161,6 +157,7 @@ class GraphEnv2D(gym.Env):
       while not solvable:
         if self.mode == "train":
           self.world_num = self.world_arr[self.curr_idx]#np.random.choice(self.world_arr)
+          self.world_num = 171
         else:
           self.world_num = self.world_arr[self.curr_idx]
         self.curr_idx = (self.curr_idx + 1) % self.max_envs
@@ -169,7 +166,6 @@ class GraphEnv2D(gym.Env):
         self.sp, self.sp_edge = shortest_path(self.G, self.G.vertex(self.source_node), self.G.vertex(self.target_node), self.G.edge_properties['weight'])
         if len(self.sp) > 0:
           solvable=True
-      # self.world_num = 17
       # self.sp_edge = self.to_edge_path(self.sp)
       self.im_num =  self.world_num
       im_name = str(self.im_num)
