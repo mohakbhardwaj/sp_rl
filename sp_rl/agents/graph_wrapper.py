@@ -260,18 +260,17 @@ class GraphWrapper(object):
     deviation = np.sum(deviation, axis=1)
     #Calculate probability of each world being true using softmax 
     scores = -1.0*deviation
+    scores = scores - np.max(scores) #Add to make softmax numberically stable
     exp_scores = np.exp(scores)
     probs = exp_scores/np.sum(exp_scores)
     #Calculate the posterior (expected value of status of an edge)
     posterior = self.train_edge_statuses * probs.reshape(probs.shape[0],1)
     posterior = np.sum(posterior , axis=0)
     post = 1.0 - posterior[idxs]
-    # print('probs', probs[1])  
-    # print('posterior', post)
-    # print('priors', self.get_priors(idxs))
+
     return post    
 
-  def get_utils(self, edges):
+  def get_utils(self, idxs):
     delta_lens = []
     delta_progs = []
     for edge in edges:

@@ -15,7 +15,5 @@ while not done:
   action = env.action_space.sample()
   obs, reward, done, info = env.step(action)
   print ('chosen edge = {}, obs = {}, reward = {}, done = {}'.format(env.edge_from_action(action), obs, reward, done))
-  # print [env.edge_from_action(a) for a in path]
-  # print obs[action], action
   env.render()
   raw_input('Press enter for next step')

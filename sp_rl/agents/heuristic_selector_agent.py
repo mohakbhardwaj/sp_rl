@@ -119,8 +119,19 @@ class HeuristicAgent(Agent):
     idx_post = np.argmax(post)
     return act_ids[idx_post]
 
+  def select_lookahead_len(self, act_ids, obs,iter, G):
+    edges = list(map(self.env.edge_from_action, act_ids))
+    delta_lens, delta_progs = G.get_utils(edges)
+    idx_lens = np.argmax(delta_lens)
+    return act_ids[idx_lens]
+
+  def select_lookahead_prog(self, act_ids, obs, iter, G):
+    edges = list(map(self.env.edge_from_action, act_ids))
+    delta_lens, delta_progs = G.get_utils(edges)
+    idx_prog = np.argmax(delta_progs)
+    return act_ids[idx_prog]
+
   def select_k_shortest(self, act_ids, obs, iter, G):
-    "Choose the edge most likely to be in collision"
     edges = list(map(self.env.edge_from_action, act_ids))
     kshort = G.get_k_short_num(edges)
     return act_ids[np.argmax(kshort)]
@@ -139,18 +150,6 @@ class HeuristicAgent(Agent):
     h = map(lambda x: x[0]*x[1], zip(kshort,priors))
     return act_ids[np.argmax(h)]
   
-  def select_lookahead_len(self, act_ids, obs,iter, G):
-    edges = list(map(self.env.edge_from_action, act_ids))
-    delta_lens, delta_progs = G.get_utils(edges)
-    # print delta_lens
-    idx_lens = np.argmax(delta_lens)
-    return act_ids[idx_lens]
-
-  def select_lookahead_prog(self, act_ids, obs, iter, G):
-    edges = list(map(self.env.edge_from_action, act_ids))
-    delta_lens, delta_progs = G.get_utils(edges)
-    idx_prog = np.argmax(delta_progs)
-    return act_ids[idx_prog]
 
 
   def length_oracle(self, act_ids, obs, iter, G, horizon=2):
