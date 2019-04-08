@@ -5,7 +5,7 @@ envs=('graphEnv2DValidation-v1' 'graphEnv2DValidation-v2' 'graphEnv2DValidation-
 #            'graphEnv2DTest-v6' 'graphEnv2DTest-v7' 'graphEnv2DTest-v8')
 
 
-base_folder='../../rss_sp_rl/experiments/rss_lsp_datasets/'
+base_folder='../../sp_rl_new_experiments/'
 folders=(${base_folder}'dataset_2d_1/lsp_selectors_test' ${base_folder}'dataset_2d_2/lsp_selectors_test' ${base_folder}'dataset_2d_3/lsp_selectors_test'\
          ${base_folder}'dataset_2d_4/lsp_selectors_test' ${base_folder}'dataset_2d_5/lsp_selectors_test' ${base_folder}'dataset_2d_6/lsp_selectors_test'\
          ${base_folder}'dataset_2d_7/lsp_selectors_test' ${base_folder}'dataset_2d_8/lsp_selectors_test')

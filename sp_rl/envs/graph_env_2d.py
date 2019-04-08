@@ -157,7 +157,7 @@ class GraphEnv2D(gym.Env):
       while not solvable:
         if self.mode == "train":
           self.world_num = self.world_arr[self.curr_idx]#np.random.choice(self.world_arr)
-          self.world_num = 171
+          # self.world_num = 171
         else:
           self.world_num = self.world_arr[self.curr_idx]
         self.curr_idx = (self.curr_idx + 1) % self.max_envs

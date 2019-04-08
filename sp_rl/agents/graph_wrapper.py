@@ -15,7 +15,6 @@ class GraphWrapper(object):
     self.source = source
     self.target = target
     self.train_edge_statuses = train_edge_statuses
-    print('Here', self.train_edge_statuses.shape)
     self.G = self.to_graph_tool(self.adj_mat) #Graph(directed=False)
     self.nedges = self.G.num_edges()
     estat = self.G.new_edge_property("int")
