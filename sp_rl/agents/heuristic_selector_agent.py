@@ -112,15 +112,15 @@ class HeuristicAgent(Agent):
   def select_prior(self, act_ids, obs, iter, G):
     "Choose the edge most likely to be in collision"
     priors = G.get_priors(act_ids)
-    # idx_prior = np.argmax(priors)
-    idx_prior = np.random.choice(np.flatnonzero(priors == priors.max()))
+    idx_prior = np.argmax(priors)
+    # idx_prior = np.random.choice(np.flatnonzero(priors == priors.max()))
     return act_ids[idx_prior]
 
   def select_posterior(self, act_ids, obs, iter, G):
     "Choose the edge most likely to be in collision given all the observations so far"
     post = G.get_posterior(act_ids, obs)
-    # idx_post = np.argmax(post)
-    idx_post = np.random.choice(np.flatnonzero(post == post.max()))
+    idx_post = np.argmax(post)
+    # idx_post = np.random.choice(np.flatnonzero(post == post.max()))
     return act_ids[idx_post]
 
   def select_lookahead_len(self, act_ids, obs,iter, G):
