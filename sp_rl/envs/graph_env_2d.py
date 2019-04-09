@@ -174,7 +174,8 @@ class GraphEnv2D(gym.Env):
     if self.render_called:
       plt.close(self.fig)
       self.render_called = False
-    graph_info = {'adj_mat': self.adj_mat, 'pos': self.pos, 'train_edge_statuses':self.train_edge_statuses, 'source_node':self.source_node, 'target_node':self.target_node}
+    graph_info = {'adj_mat': self.adj_mat, 'pos': self.pos, 'train_edge_statuses':self.train_edge_statuses, 
+                  'source_node':self.source_node, 'target_node':self.target_node, 'action_to_edge': self.action_to_edge_tup}
     self.first_reset = False
     # print self.curr_idx
     return self.obs,  graph_info

@@ -22,6 +22,7 @@ class HeuristicAgent(Agent):
                       'select_priorkshort': self.select_priorkshort,
                       'select_lookahead_len': self.select_lookahead_len,
                       'select_lookahead_prog': self.select_lookahead_prog,
+                      'select_posterior_delta_len': self.select_posterior_delta_len,
                       'length_oracle':self.length_oracle,
                       'length_oracle_2':self.length_oracle_2}
 
@@ -31,7 +32,8 @@ class HeuristicAgent(Agent):
     self.ftr_params = ftr_params
     if 'pos' in self.graph_info: node_pos = self.graph_info['pos']
     else: node_pos = None
-    self.G = GraphWrapper(self.graph_info['adj_mat'], self.graph_info['source_node'], self.graph_info['target_node'], ftr_params=ftr_params, pos=node_pos, train_edge_statuses=self.graph_info['train_edge_statuses'], lite_ftrs=lite_ftrs)
+    # self.G = GraphWrapper(self.graph_info['adj_mat'], self.graph_info['source_node'], self.graph_info['target_node'], ftr_params=ftr_params, pos=node_pos, train_edge_statuses=self.graph_info['train_edge_statuses'], lite_ftrs=lite_ftrs)
+    self.G = GraphWrapper(self.graph_info)
 
 
   def train(self, num_episodes, render=False, step=False):
@@ -56,7 +58,7 @@ class HeuristicAgent(Agent):
         path = self.get_path(self.G)
         feas_actions = self.filter_path(path, obs)
         act_id = self.selector(feas_actions, obs, j+1, self.G)
-        act_e = self.env.edge_from_action(act_id)
+        # act_e = self.env.edge_from_action(act_id)
         if render:
           self.render_env(obs, feas_actions, act_id)
         # print('feasible actions = {}, chosen edge = {}, edge_features = {}'.format(feas_actions, [act_id, act_e], ftrs))
@@ -65,7 +67,7 @@ class HeuristicAgent(Agent):
         # print path, feas_actions, obs[act_id]
         # print ('obs = {}, reward = {}, done = {}'.format(obs, reward, done))
          
-        self.G.update_edge(act_e, obs[act_id]) #Update the edge weight according to the result
+        self.G.update_edge(act_id, obs[act_id]) #Update the edge weight according to the result
         ep_reward += reward
         j += 1
       #Render environment one last time
@@ -110,26 +112,37 @@ class HeuristicAgent(Agent):
   def select_prior(self, act_ids, obs, iter, G):
     "Choose the edge most likely to be in collision"
     priors = G.get_priors(act_ids)
-    idx_prior = np.argmax(priors)
+    # idx_prior = np.argmax(priors)
+    idx_prior = np.random.choice(np.flatnonzero(priors == priors.max()))
     return act_ids[idx_prior]
 
   def select_posterior(self, act_ids, obs, iter, G):
     "Choose the edge most likely to be in collision given all the observations so far"
     post = G.get_posterior(act_ids, obs)
-    idx_post = np.argmax(post)
+    # idx_post = np.argmax(post)
+    idx_post = np.random.choice(np.flatnonzero(post == post.max()))
     return act_ids[idx_post]
 
   def select_lookahead_len(self, act_ids, obs,iter, G):
-    edges = list(map(self.env.edge_from_action, act_ids))
-    delta_lens, delta_progs = G.get_utils(edges)
-    idx_lens = np.argmax(delta_lens)
+    # edges = list(map(self.env.edge_from_action, act_ids))
+    delta_lens, _ = G.get_utils(act_ids)
+    idx_lens = np.argmax(delta_lens)#np.random.choice(np.flatnonzero(delta_lens == delta_lens.max()))
     return act_ids[idx_lens]
 
   def select_lookahead_prog(self, act_ids, obs, iter, G):
-    edges = list(map(self.env.edge_from_action, act_ids))
-    delta_lens, delta_progs = G.get_utils(edges)
-    idx_prog = np.argmax(delta_progs)
+    _, delta_progs = G.get_utils(act_ids)
+    idx_prog = np.argmax(delta_progs)#np.random.choice(np.flatnonzero(delta_progs == delta_progs.max()))
     return act_ids[idx_prog]
+
+  def select_posterior_delta_len(self, act_ids, obs, iter, G):
+    p = G.get_posterior(act_ids, obs)
+    dl, _ = G.get_utils(act_ids)
+    pdl = p * dl
+    idx_pdl = np.argmax(pdl)
+    # idx_pdl = np.random.choice(np.flatnonzero(pdl == pdl.max()))
+    # print p, dl, pdl, np.argmax(pdl), idx_pdl
+    return act_ids[idx_pdl] 
+
 
   def select_k_shortest(self, act_ids, obs, iter, G):
     edges = list(map(self.env.edge_from_action, act_ids))
