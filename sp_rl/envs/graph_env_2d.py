@@ -31,7 +31,6 @@ class GraphEnv2D(gym.Env):
     self.file_idxing = file_idxing
     self.nnodes, self.nedges, self.G, self.adj_mat, self.pos, self.action_to_edge_tup, self.action_to_gt_edge, self.edge_tup_to_action, self.action_to_edge_id, self.edge_weights, self.vert_pos, self.Gdraw = self.initialize_graph(dataset_folder) 
     self.source_node, self.target_node, self.edge_statuses = self.initialize_world_distrib(dataset_folder)#, self.data_idxs)
-    # self.edge_priors = self.calculate_edge_priors()
     self.train_edge_statuses = self.edge_statuses[0:self.metadata['max_train_envs'], :]
     #Randomly shuffle the worlds
     self.curr_idx = 0
@@ -126,14 +125,14 @@ class GraphEnv2D(gym.Env):
       else:
         raise ValueError
   
-  def calculate_edge_priors(self):
-    edge_priors = {}
-    train_only = self.edge_statuses[0:self.metadata['max_train_envs'], :]
-    prior_vec =  np.mean(train_only, axis=0)
-    for a,edge in self.action_to_edge_tup.iteritems():
-      edge_priors[(edge[0], edge[1])] = prior_vec[a]
-      edge_priors[(edge[1], edge[0])] = prior_vec[a]
-    return edge_priors
+  # def calculate_edge_priors(self):
+  #   edge_priors = {}
+  #   train_only = self.edge_statuses[0:self.metadata['max_train_envs'], :]
+  #   prior_vec =  np.mean(train_only, axis=0)
+  #   for a,edge in self.action_to_edge_tup.iteritems():
+  #     edge_priors[(edge[0], edge[1])] = prior_vec[a]
+  #     edge_priors[(edge[1], edge[0])] = prior_vec[a]
+  #   return edge_priors
   
   def step(self, action):
     done = False
@@ -157,13 +156,13 @@ class GraphEnv2D(gym.Env):
       while not solvable:
         if self.mode == "train":
           self.world_num = self.world_arr[self.curr_idx]#np.random.choice(self.world_arr)
-          # self.world_num = 171
         else:
           self.world_num = self.world_arr[self.curr_idx]
         self.curr_idx = (self.curr_idx + 1) % self.max_envs
         self.curr_edge_stats = self.edge_statuses[self.world_num-self.file_idxing, :] #Sample a random world from the dataset
         self.reinit_graph_status(self.curr_edge_stats)
         self.sp, self.sp_edge = shortest_path(self.G, self.G.vertex(self.source_node), self.G.vertex(self.target_node), self.G.edge_properties['weight'])
+        print(self.path_length(self.sp_edge))
         if len(self.sp) > 0:
           solvable=True
       # self.sp_edge = self.to_edge_path(self.sp)
@@ -177,7 +176,6 @@ class GraphEnv2D(gym.Env):
     graph_info = {'adj_mat': self.adj_mat, 'pos': self.pos, 'train_edge_statuses':self.train_edge_statuses, 
                   'source_node':self.source_node, 'target_node':self.target_node, 'action_to_edge': self.action_to_edge_tup}
     self.first_reset = False
-    # print self.curr_idx
     return self.obs,  graph_info
   
   def render(self, mode='human', edge_widths={}, edge_colors={}, close=False):
@@ -207,7 +205,6 @@ class GraphEnv2D(gym.Env):
     nx.draw_networkx_edges(self.Gdraw, self.pos, ax=self.ax, edge_color=edge_color_list, width=edge_width_list, alpha=0.6)
     nx.draw_networkx_nodes(self.Gdraw, self.pos, ax=self.ax, nodelist=[self.source_node, self.target_node], node_color=['b', 'g'], node_size=20)
     self.fig.canvas.draw()
-    # graph_draw(self.G, self.G.vp["pos"])
 
   def seed(self, seed=None):
     np.random.seed(seed)

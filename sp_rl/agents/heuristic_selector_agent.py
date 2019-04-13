@@ -7,6 +7,7 @@ import networkx as nx
 from agent import Agent
 from graph_wrapper import GraphWrapper
 import time
+import csv
 
 class HeuristicAgent(Agent):
   def __init__(self, env, selector_str, ftr_params=None, lite_ftrs=False):
@@ -20,19 +21,18 @@ class HeuristicAgent(Agent):
                       'select_k_shortest': self.select_k_shortest,
                       'select_multiple': self.select_multiple,
                       'select_priorkshort': self.select_priorkshort,
-                      'select_lookahead_len': self.select_lookahead_len,
-                      'select_lookahead_prog': self.select_lookahead_prog,
+                      'select_delta_len': self.select_delta_len,
+                      'select_delta_prog': self.select_delta_prog,
                       'select_posterior_delta_len': self.select_posterior_delta_len,
                       'length_oracle':self.length_oracle,
                       'length_oracle_2':self.length_oracle_2}
 
-
+    self.selector_str = selector_str
     self.selector = self.SELECTORS[selector_str]
     _, self.graph_info = self.env.reset(roll_back=True)
     self.ftr_params = ftr_params
     if 'pos' in self.graph_info: node_pos = self.graph_info['pos']
     else: node_pos = None
-    # self.G = GraphWrapper(self.graph_info['adj_mat'], self.graph_info['source_node'], self.graph_info['target_node'], ftr_params=ftr_params, pos=node_pos, train_edge_statuses=self.graph_info['train_edge_statuses'], lite_ftrs=lite_ftrs)
     self.G = GraphWrapper(self.graph_info)
 
 
@@ -44,13 +44,19 @@ class HeuristicAgent(Agent):
     start_t = time.time()
     test_rewards = {}
     test_avg_rewards = {}
-    j = 0
     for i in range(num_episodes):
+      sp_len_arr = []
+      edge_check_arr = []
+      invalid_check_arr = []
+      posterior_arr = []
+      delta_len_arr = []
       obs, _ = self.env.reset()
       self.G.reset()
       path = self.get_path(self.G)
       if render:
         self.render_env(obs, path)
+      j = 0
+      k = 0
       run_base = False 
       ep_reward = 0
       done = False
@@ -59,6 +65,14 @@ class HeuristicAgent(Agent):
         feas_actions = self.filter_path(path, obs)
         act_id = self.selector(feas_actions, obs, j+1, self.G)
         # act_e = self.env.edge_from_action(act_id)
+        sp_len_arr.append(self.G.curr_sp_len)
+        edge_check_arr.append(j)
+        invalid_check_arr.append(k)
+        post = self.G.get_posterior([act_id], obs)
+        posterior_arr.append(post[0])
+        delta_len = self.G.get_delta_len_util([act_id])
+        delta_len_arr.append(delta_len[0])
+
         if render:
           self.render_env(obs, feas_actions, act_id)
         # print('feasible actions = {}, chosen edge = {}, edge_features = {}'.format(feas_actions, [act_id, act_e], ftrs))
@@ -70,15 +84,40 @@ class HeuristicAgent(Agent):
         self.G.update_edge(act_id, obs[act_id]) #Update the edge weight according to the result
         ep_reward += reward
         j += 1
+        if obs[act_id] == 0: k += 1
+
       #Render environment one last time
       if render:
         self.render_env(obs, path)
         raw_input('Press Enter')
-      
+        
       test_rewards[self.env.world_num] = ep_reward
       test_avg_rewards[self.env.world_num] = np.mean(test_rewards.values())
+      # plt.figure()
+      # plt.plot(sp_len_arr, edge_check_arr,    label='Total edges checked')
+      # plt.plot(sp_len_arr, invalid_check_arr, label='Invalid edges checked')
+      results_dict = {}
+      results_dict['sp_len'] = sp_len_arr
+      results_dict['edge_checked'] = edge_check_arr
+      results_dict['invalid_checked'] = invalid_check_arr 
+      results_dict['posterior'] = posterior_arr
+      results_dict['delta_len'] = delta_len_arr
+      with open(self.selector_str + '_data.csv', 'w') as csv_file:
+        writer = csv.writer(csv_file, dialect=csv.excel)
+        for key, value in results_dict.items():
+          row=[key]
+          for v in value: row.append(v)
+          writer.writerow(row)
       if step: raw_input('Episode over, press enter for next episode')
-    
+
+      # plt.xlabel('Current shortest path length')  
+      # plt.ylabel('Edge checks')
+      # plt.legend()
+      # plt.show()  
+    # with open('posterior_plot.txt', 'w') as f:
+    #   for item in my_list:
+    #     f.write("%s\n" % item)
+
     avg_time_taken = time.time() - start_t
     avg_time_taken = avg_time_taken/num_episodes*1.0
     
@@ -123,24 +162,22 @@ class HeuristicAgent(Agent):
     # idx_post = np.random.choice(np.flatnonzero(post == post.max()))
     return act_ids[idx_post]
 
-  def select_lookahead_len(self, act_ids, obs,iter, G):
+  def select_delta_len(self, act_ids, obs,iter, G):
     # edges = list(map(self.env.edge_from_action, act_ids))
-    delta_lens, _ = G.get_utils(act_ids)
+    delta_lens = G.get_delta_len_util(act_ids)
     idx_lens = np.argmax(delta_lens)#np.random.choice(np.flatnonzero(delta_lens == delta_lens.max()))
     return act_ids[idx_lens]
 
-  def select_lookahead_prog(self, act_ids, obs, iter, G):
-    _, delta_progs = G.get_utils(act_ids)
+  def select_delta_prog(self, act_ids, obs, iter, G):
+    delta_progs = G.get_delta_prog_util(act_ids)
     idx_prog = np.argmax(delta_progs)#np.random.choice(np.flatnonzero(delta_progs == delta_progs.max()))
     return act_ids[idx_prog]
 
   def select_posterior_delta_len(self, act_ids, obs, iter, G):
     p = G.get_posterior(act_ids, obs)
-    dl, _ = G.get_utils(act_ids)
+    dl = G.get_delta_len_util(act_ids)
     pdl = p * dl
     idx_pdl = np.argmax(pdl)
-    # idx_pdl = np.random.choice(np.flatnonzero(pdl == pdl.max()))
-    # print p, dl, pdl, np.argmax(pdl), idx_pdl
     return act_ids[idx_pdl] 
 
 
