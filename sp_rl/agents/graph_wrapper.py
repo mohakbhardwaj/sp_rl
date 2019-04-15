@@ -6,6 +6,7 @@ import numpy as np
 from itertools import islice
 import time
 from copy import deepcopy
+import networkx as nx
 
 class GraphWrapper(object):
   def __init__(self, graph_info):
@@ -20,6 +21,8 @@ class GraphWrapper(object):
     self.nedges = self.G.num_edges()
     estat       = self.G.new_edge_property("int")
     self.G.edge_properties['status'] = estat
+    self.Gnx = nx.from_numpy_matrix(self.adj_mat)
+
     # if pos is not None:
     #   vert_pos = self.G.new_vertex_property("vector<double>")
     #   self.G.vp['pos'] = vert_pos
@@ -36,6 +39,7 @@ class GraphWrapper(object):
     
     self.curr_sp = self.shortest_path(self.source, self.target, 'weight', 'euc_dist')
     self.curr_sp_len = self.path_length(self.in_edge_form(self.curr_sp))
+    # self.sp_iterator = all_paths(self.G, self.source, self.target)#, self.G.edge_properties['weight'], epsilon=0.1)
     self.num_invalid_checked = 0.0
     self.num_valid_checked = 0.0
     self.total_checked = 0.0
@@ -99,6 +103,8 @@ class GraphWrapper(object):
     #       else: self.G[e[0]][e[1]]['k_short_len'] = self.G[e[0]][e[1]]['k_short_len'] + l
     #       self.G[e[0]][e[1]]['k_short_eval'] = 0.0   
 
+  def k_shortest_paths(self, source, target, k, weight=None):
+    return list(islice(nx.shortest_simple_paths(self.Gnx, source, target, weight=weight), k))
 
   def shortest_path(self, source, target, attr='weight', dist_fn = 'euc_dist'):
     sp, _ = shortest_path(self.G, self.G.vertex(source), self.G.vertex(target), self.G.edge_properties['weight'])  
