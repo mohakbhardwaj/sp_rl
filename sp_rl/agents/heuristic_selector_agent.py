@@ -18,7 +18,7 @@ class HeuristicAgent(Agent):
                       'select_alternate': self.select_alternate,
                       'select_prior': self.select_prior,
                       'select_posterior': self.select_posterior,
-                      'select_k_shortest': self.select_k_shortest,
+                      'select_ksp_centrality': self.select_ksp_centrality,
                       'select_multiple': self.select_multiple,
                       'select_priorkshort': self.select_priorkshort,
                       'select_delta_len': self.select_delta_len,
@@ -181,10 +181,10 @@ class HeuristicAgent(Agent):
     return act_ids[idx_pdl] 
 
 
-  def select_k_shortest(self, act_ids, obs, iter, G):
-    edges = list(map(self.env.edge_from_action, act_ids))
-    kshort = G.get_k_short_num(edges)
-    return act_ids[np.argmax(kshort)]
+  def select_ksp_centrality(self, act_ids, obs, iter, G):
+    ksp_centr = G.get_ksp_centrality(act_ids)
+    print ksp_centr
+    return act_ids[np.argmax(ksp_centr)]
 
   def select_multiple(self, act_ids, obs, iter, G):
     """Choose the best edge according to all heuristics"""

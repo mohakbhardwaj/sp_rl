@@ -17,6 +17,7 @@ class GraphWrapper(object):
     self.target     = graph_info['target_node']
     self.train_edge_statuses = graph_info['train_edge_statuses']
     self.action_to_edge      = graph_info['action_to_edge']
+    self.edge_to_action      = graph_info['edge_to_action']
     self.G      = self.to_graph_tool(self.adj_mat)
     self.nedges = self.G.num_edges()
     estat       = self.G.new_edge_property("int")
@@ -40,9 +41,16 @@ class GraphWrapper(object):
     self.curr_sp = self.shortest_path(self.source, self.target, 'weight', 'euc_dist')
     self.curr_sp_len = self.path_length(self.in_edge_form(self.curr_sp))
     # self.sp_iterator = all_paths(self.G, self.source, self.target)#, self.G.edge_properties['weight'], epsilon=0.1)
+    tm = time.time()
+    self.ksp_vec = self.ksp_centrality(num_paths=3000)
+    print('ksp time = ', time.time()-tm)
     self.num_invalid_checked = 0.0
     self.num_valid_checked = 0.0
     self.total_checked = 0.0
+
+    # print self.k_shortest_paths(self.source, self.target, 10, 'weight')
+    # print self.curr_sp
+    
     # self.ftr_params = ftr_params
     # self.k_sp_nodes, self.k_sp, self.k_sp_len = self.k_shortest_paths(ftr_params['k'], attr='weight')
     # self.k_sp_nodes_f = deepcopy(self.k_sp_nodes)
@@ -143,6 +151,19 @@ class GraphWrapper(object):
       self.num_valid_checked += 1.0
       self.total_checked += 1.0
 
+  def ksp_centrality(self, num_paths=100):
+    ksp_vec = np.zeros(self.nedges) 
+    ksp = self.k_shortest_paths(self.source, self.target, num_paths, 'weight')
+    for sp in ksp:
+      # sp_edge = self.in_edge_form(sp)
+      for i in xrange(len(sp)-1):
+        edge = (sp[i], sp[i+1])
+        # print edge, self.edge_to_action[edge]
+        ksp_vec[self.edge_to_action[edge]] += 1.0
+    return ksp_vec/num_paths*1.0
+
+
+
   def get_features(self, eids, obs, itr):
     """Calculate features for a given set of edges
     Params:
@@ -208,6 +229,10 @@ class GraphWrapper(object):
       dp = self.edge_delta_prog(eid)
       delta_progs[i] = dp
     return delta_progs
+
+  def get_ksp_centrality(self, eids):
+    ksp_centr = self.ksp_vec[eids]
+    return ksp_centr
 
 
   def edge_delta_len(self, eid):
