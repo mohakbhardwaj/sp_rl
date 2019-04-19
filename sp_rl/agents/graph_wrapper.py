@@ -35,15 +35,15 @@ class GraphWrapper(object):
     #   self.G.edge_properties['p_free'] = eprior
     if self.train_edge_statuses is not None:
       self.edge_prior_vec = np.mean(self.train_edge_statuses, axis=0)    
-    for edge in self.G.edges():
-      self.G.edge_properties['status'][edge] = -1
+    # for edge in self.G.edges():
+      # self.G.edge_properties['status'][edge] = -1
     
     self.curr_sp = self.shortest_path(self.source, self.target, 'weight', 'euc_dist')
-    self.curr_sp_len = self.path_length(self.in_edge_form(self.curr_sp))
+    self.curr_sp_len = self.path_length(self.curr_sp)
     # self.sp_iterator = all_paths(self.G, self.source, self.target)#, self.G.edge_properties['weight'], epsilon=0.1)
-    tm = time.time()
-    self.ksp_vec = self.ksp_centrality(num_paths=3000)
-    print('ksp time = ', time.time()-tm)
+    # tm = time.time()
+    # self.ksp_vec = self.ksp_centrality(num_paths=3000)
+    # print('ksp time = ', time.time()-tm)
     self.num_invalid_checked = 0.0
     self.num_valid_checked = 0.0
     self.total_checked = 0.0
@@ -84,33 +84,15 @@ class GraphWrapper(object):
     #   self.G.edge_properties['p_free'] = eprior
     
     for edge in self.G.edges():
-      self.G.edge_properties['status'][edge] = -1
+      # self.G.edge_properties['status'][edge] = -1
       self.G.edge_properties['weight'][edge] = self.adj_mat[int(edge.source()), int(edge.target())]
-      # if self.edge_priors is not None:
-      #   eprior[edge] = self.edge_priors[(edge.source(), edge.target())]
-
-    
 
     self.num_invalid_checked = 0.0
     self.num_valid_checked = 0.0
     self.total_checked = 0.0
     self.curr_sp     = self.shortest_path(self.source, self.target, 'weight', 'euc_dist')
-    self.curr_sp_len = self.path_length(self.in_edge_form(self.curr_sp))
+    self.curr_sp_len = self.path_length(self.curr_sp)
     
-    # if not self.lite_ftrs:
-    #   self.k_sp_nodes = deepcopy(self.k_sp_nodes_f)
-    #   self.k_sp       = deepcopy(self.k_sp_f)
-    #   self.k_sp_len   = deepcopy(self.k_sp_len_f)
-    #   nx.set_edge_attributes(self.G, 0.0, 'k_short_num')
-    #   nx.set_edge_attributes(self.G, -1.0, 'k_short_len')
-    #   for sp, l in zip(self.k_sp, self.k_sp_len):
-    #     for e in sp:
-    #       self.G[e[0]][e[1]]['k_short_num'] = self.G[e[0]][e[1]]['k_short_num'] + 1.0
-    #       if self.G[e[0]][e[1]]['k_short_len'] == -1.0:
-    #         self.G[e[0]][e[1]]['k_short_len'] = l
-    #       else: self.G[e[0]][e[1]]['k_short_len'] = self.G[e[0]][e[1]]['k_short_len'] + l
-    #       self.G[e[0]][e[1]]['k_short_eval'] = 0.0   
-
   def k_shortest_paths(self, source, target, k, weight=None):
     return list(islice(nx.shortest_simple_paths(self.Gnx, source, target, weight=weight), k))
 
@@ -127,17 +109,19 @@ class GraphWrapper(object):
     """
     edge = self.action_to_edge[eid]
     gt_edge = self.G.edge(edge[0], edge[1])
-    self.G.edge_properties['status'][gt_edge] = new_status 
+    # self.G.edge_properties['status'][gt_edge] = new_status 
     if new_status == 0: 
       self.G.edge_properties['weight'][gt_edge] = np.inf #if invalid set weight to infinity
+      self.Gnx[edge[0]][edge[1]]['weight'] = np.inf
       if prev_status == -1:
         self.num_invalid_checked += 1.0
         self.total_checked += 1.0 
       self.curr_sp = self.shortest_path(self.source, self.target, 'weight', 'euc_dist') #recalculate shortest path if edge invalid
-      self.curr_sp_len = self.path_length(self.in_edge_form(self.curr_sp))
+      self.curr_sp_len = self.path_length(self.curr_sp)
     
     elif new_status == -1: 
       self.G.edge_properties['weight'][gt_edge] = self.adj_mat[int(edge[0]), int(edge[1])]
+      self.Gnx[edge[0]][edge[1]]['weight'] = self.adj_mat[int(edge[0]), int(edge[1])]
       if prev_status == 0:
         self.num_invalid_checked += 1.0
         self.total_checked += 1.0
@@ -145,8 +129,7 @@ class GraphWrapper(object):
         self.num_valid_checked +=1.0
         self.total_checked +=1.0
       self.curr_sp = self.shortest_path(self.source, self.target, 'weight', 'euc_dist') #recalculate shortest path if edge invalid
-      self.curr_sp_len = self.path_length(self.in_edge_form(self.curr_sp))
-        
+      self.curr_sp_len = self.path_length(self.curr_sp)
     elif new_status == 1:
       self.num_valid_checked += 1.0
       self.total_checked += 1.0
@@ -155,10 +138,8 @@ class GraphWrapper(object):
     ksp_vec = np.zeros(self.nedges) 
     ksp = self.k_shortest_paths(self.source, self.target, num_paths, 'weight')
     for sp in ksp:
-      # sp_edge = self.in_edge_form(sp)
       for i in xrange(len(sp)-1):
         edge = (sp[i], sp[i+1])
-        # print edge, self.edge_to_action[edge]
         ksp_vec[self.edge_to_action[edge]] += 1.0
     return ksp_vec/num_paths*1.0
 
@@ -218,8 +199,6 @@ class GraphWrapper(object):
     delta_lens = np.zeros(len(eids))
     for i, eid in enumerate(eids):
       dl = self.edge_delta_len(eid)
-      # print dl, self.curr_shortest_path_len, dl + self.curr_shortest_path_len, 1.807061 
-      # if self.curr_shortest_path_len + dl > 1.807061:
       delta_lens[i] = dl
     return delta_lens
 
@@ -231,7 +210,8 @@ class GraphWrapper(object):
     return delta_progs
 
   def get_ksp_centrality(self, eids):
-    ksp_centr = self.ksp_vec[eids]
+    ksp_vec = self.ksp_centrality(500)
+    ksp_centr = ksp_vec[eids]
     return ksp_centr
 
 
@@ -255,8 +235,8 @@ class GraphWrapper(object):
     delta_progress = 0.0
     if len(new_sp) > 0:
       new_sp_len = self.curr_sp_len
-      for e in self.in_edge_form(new_sp):
-        gt_edge = self.G.edge(e[0], e[1])
+      for i in xrange(len(new_sp)-1):
+        gt_edge = self.G.edge(new_sp[i], new_sp[i+1])
         if self.G.edge_properties['status'][gt_edge] == -1:
           delta_progress += 1.0
       delta_progress = delta_progress/(len(new_sp)-1)
@@ -289,8 +269,8 @@ class GraphWrapper(object):
 
   def path_length(self, path):
     w = 0.0
-    for edge in path:
-      w = w + self.G.edge_properties['weight'][edge]
+    for i in xrange(len(path)-1):
+      w = w + self.adj_mat[int(path[i]), int(path[i+1])]
     return w
 
   def in_edge_tup_form(self, path):

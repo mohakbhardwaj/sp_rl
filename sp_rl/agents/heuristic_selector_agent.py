@@ -19,8 +19,7 @@ class HeuristicAgent(Agent):
                       'select_prior': self.select_prior,
                       'select_posterior': self.select_posterior,
                       'select_ksp_centrality': self.select_ksp_centrality,
-                      'select_multiple': self.select_multiple,
-                      'select_priorkshort': self.select_priorkshort,
+                      'select_posteriorksp': self.select_posteriorksp,
                       'select_delta_len': self.select_delta_len,
                       'select_delta_prog': self.select_delta_prog,
                       'select_posterior_delta_len': self.select_posterior_delta_len,
@@ -45,16 +44,18 @@ class HeuristicAgent(Agent):
     test_rewards = {}
     test_avg_rewards = {}
     for i in range(num_episodes):
-      sp_len_arr = []
-      edge_check_arr = []
-      invalid_check_arr = []
-      posterior_arr = []
-      delta_len_arr = []
+      # sp_len_arr = []
+      # edge_check_arr = []
+      # invalid_check_arr = []
+      # posterior_arr = []
+      # delta_len_arr = []
+      # ksp_arr = []
       obs, _ = self.env.reset()
       self.G.reset()
       path = self.get_path(self.G)
       if render:
         self.render_env(obs, path)
+        raw_input('Press enter to start')
       j = 0
       k = 0
       run_base = False 
@@ -65,14 +66,15 @@ class HeuristicAgent(Agent):
         feas_actions = self.filter_path(path, obs)
         act_id = self.selector(feas_actions, obs, j+1, self.G)
         # act_e = self.env.edge_from_action(act_id)
-        sp_len_arr.append(self.G.curr_sp_len)
-        edge_check_arr.append(j)
-        invalid_check_arr.append(k)
-        post = self.G.get_posterior([act_id], obs)
-        posterior_arr.append(post[0])
-        delta_len = self.G.get_delta_len_util([act_id])
-        delta_len_arr.append(delta_len[0])
-
+        # sp_len_arr.append(self.G.curr_sp_len)
+        # edge_check_arr.append(j)
+        # invalid_check_arr.append(k)
+        # post = self.G.get_posterior(/[act_id], obs)
+        # posterior_arr.append(post[0])
+        # delta_len = self.G.get_delta_len_util([act_id])
+        # delta_len_arr.append(delta_len[0])
+        # kspc = self.G.get_ksp_centrality([act_id])
+        # ksp_arr.append(kspc[0])
         if render:
           self.render_env(obs, feas_actions, act_id)
         # print('feasible actions = {}, chosen edge = {}, edge_features = {}'.format(feas_actions, [act_id, act_e], ftrs))
@@ -96,18 +98,19 @@ class HeuristicAgent(Agent):
       # plt.figure()
       # plt.plot(sp_len_arr, edge_check_arr,    label='Total edges checked')
       # plt.plot(sp_len_arr, invalid_check_arr, label='Invalid edges checked')
-      results_dict = {}
-      results_dict['sp_len'] = sp_len_arr
-      results_dict['edge_checked'] = edge_check_arr
-      results_dict['invalid_checked'] = invalid_check_arr 
-      results_dict['posterior'] = posterior_arr
-      results_dict['delta_len'] = delta_len_arr
-      with open(self.selector_str + '_data.csv', 'w') as csv_file:
-        writer = csv.writer(csv_file, dialect=csv.excel)
-        for key, value in results_dict.items():
-          row=[key]
-          for v in value: row.append(v)
-          writer.writerow(row)
+      # results_dict = {}
+      # results_dict['sp_len'] = sp_len_arr
+      # results_dict['edge_checked'] = edge_check_arr
+      # results_dict['invalid_checked'] = invalid_check_arr 
+      # results_dict['posterior'] = posterior_arr
+      # results_dict['delta_len'] = delta_len_arr
+      # results_dict['ksp_centr'] = ksp_arr
+      # with open(self.selector_str + '_data.csv', 'w') as csv_file:
+      #   writer = csv.writer(csv_file, dialect=csv.excel)
+      #   for key, value in results_dict.items():
+      #     row=[key]
+      #     for v in value: row.append(v)
+      #     writer.writerow(row)
       if step: raw_input('Episode over, press enter for next episode')
 
       # plt.xlabel('Current shortest path length')  
@@ -163,7 +166,6 @@ class HeuristicAgent(Agent):
     return act_ids[idx_post]
 
   def select_delta_len(self, act_ids, obs,iter, G):
-    # edges = list(map(self.env.edge_from_action, act_ids))
     delta_lens = G.get_delta_len_util(act_ids)
     idx_lens = np.argmax(delta_lens)#np.random.choice(np.flatnonzero(delta_lens == delta_lens.max()))
     return act_ids[idx_lens]
@@ -180,18 +182,11 @@ class HeuristicAgent(Agent):
     idx_pdl = np.argmax(pdl)
     return act_ids[idx_pdl] 
 
-
   def select_ksp_centrality(self, act_ids, obs, iter, G):
     ksp_centr = G.get_ksp_centrality(act_ids)
     print ksp_centr
     return act_ids[np.argmax(ksp_centr)]
 
-  def select_multiple(self, act_ids, obs, iter, G):
-    """Choose the best edge according to all heuristics"""
-    edges = list(map(self.env.edge_from_action, act_ids))
-    ftrs = G.get_features(edges, iter) 
-    h = np.min(ftrs, axis=1)
-    return act_ids[np.argmax(h)]
 
   def select_priorkshort(self, act_ids, obs, iter, G):
     edges = list(map(self.env.edge_from_action, act_ids))
@@ -200,6 +195,11 @@ class HeuristicAgent(Agent):
     h = map(lambda x: x[0]*x[1], zip(kshort,priors))
     return act_ids[np.argmax(h)]
   
+  def select_posteriorksp(seld, act_ids, obs, iter, G):
+    p = G.get_posterior(act_ids, obs)
+    ksp_centr = G.get_ksp_centrality(act_ids)
+    pksp = p * ksp_centr
+    return act_ids[np.argmax(pksp)]
 
 
   def length_oracle(self, act_ids, obs, iter, G, horizon=2):

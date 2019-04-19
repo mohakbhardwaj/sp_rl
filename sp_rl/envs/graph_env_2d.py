@@ -125,15 +125,7 @@ class GraphEnv2D(gym.Env):
       else:
         raise ValueError
   
-  # def calculate_edge_priors(self):
-  #   edge_priors = {}
-  #   train_only = self.edge_statuses[0:self.metadata['max_train_envs'], :]
-  #   prior_vec =  np.mean(train_only, axis=0)
-  #   for a,edge in self.action_to_edge_tup.iteritems():
-  #     edge_priors[(edge[0], edge[1])] = prior_vec[a]
-  #     edge_priors[(edge[1], edge[0])] = prior_vec[a]
-  #   return edge_priors
-  
+
   def step(self, action):
     done = False
     reward = -1
@@ -151,13 +143,17 @@ class GraphEnv2D(gym.Env):
       self.first_reset=True
   
     #Sample worlds till you sample a solvable one
+    self.world_num=2
     solvable = False
     if not self.first_reset:
       while not solvable:
         if self.mode == "train":
           self.world_num = self.world_arr[self.curr_idx]#np.random.choice(self.world_arr)
+          self.world_num=2
         else:
           self.world_num = self.world_arr[self.curr_idx]
+          self.world_num=2
+        # self.word_num = 2
         self.curr_idx = (self.curr_idx + 1) % self.max_envs
         self.curr_edge_stats = self.edge_statuses[self.world_num-self.file_idxing, :] #Sample a random world from the dataset
         self.reinit_graph_status(self.curr_edge_stats)
@@ -170,6 +166,7 @@ class GraphEnv2D(gym.Env):
       im_name = str(self.im_num)
       if self.file_idxing == 1: im_name = "world_" + str(self.im_num)
       self.img = np.flipud(plt.imread(os.path.join(self.dataset_folder, "environment_images/"+im_name+".png")))
+    
     if self.render_called:
       plt.close(self.fig)
       self.render_called = False
