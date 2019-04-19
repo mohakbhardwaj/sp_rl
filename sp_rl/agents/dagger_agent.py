@@ -8,19 +8,24 @@ import sp_rl
 import networkx as nx
 from agent import Agent
 from copy import deepcopy
-from sp_rl.learning import LinearNet, ExperienceBuffer, select_forward, select_backward, select_alternate, select_prior, select_lookahead, length_oracle, init_weights, select_lookahead_len
+from sp_rl.learning import LinearNet, ExperienceBuffer, select_forward, select_backward, select_alternate, select_prior, select_posterior, select_ksp_centrality, select_posteriorksp, select_delta_len, select_delta_prog, select_posterior_delta_len, length_oracle, length_oracle_2, init_weights
 
 class DaggerAgent(Agent):
   def __init__(self, train_env, valid_env, policy, beta0, expert_str, G, epochs):
     super(DaggerAgent, self).__init__(train_env)
     self.EXPERTS = {'select_expand': None,
-                    'select_forward': select_forward,
-                    'select_backward': select_backward,
-                    'select_alternate': select_alternate,
-                    'select_prior': select_prior, 
-                    'select_lookahead': select_lookahead,
-                    'length_oracle': length_oracle,
-                    'select_lookahead_len': select_lookahead_len}
+                    'select_forward':   self.select_forward,
+                    'select_backward':  self.select_backward,
+                    'select_alternate': self.select_alternate,
+                    'select_prior':     self.select_prior,
+                    'select_posterior': self.select_posterior,
+                    'select_ksp_centrality': self.select_ksp_centrality,
+                    'select_posteriorksp':   self.select_posteriorksp,
+                    'select_delta_len':  self.select_delta_len,
+                    'select_delta_prog': self.select_delta_prog,
+                    'select_posterior_delta_len': self.select_posterior_delta_len,
+                    'length_oracle': self.length_oracle,
+                    'length_oracle_2': self.length_oracle_2}
     
     self.train_env = train_env
     self.valid_env = valid_env
@@ -29,7 +34,6 @@ class DaggerAgent(Agent):
     self.G = G
     self.train_epochs = epochs
     self.policy = policy
-    # self.T = T
 
 
   def train(self, num_iterations, num_eval_episodes, num_valid_episodes, heuristic = None, re_init=False, render=False, step=False, mixed_rollin=False):
@@ -53,10 +57,8 @@ class DaggerAgent(Agent):
       iter_rewards = []
       Xdata = []
       Ydata = []
-      if i == 0:
-        beta = 1.0 #Rollout with expert initially
-      else:
-        beta = self.beta0/i*1.0
+      if i == 0: beta = 1.0 #Rollout with expert initially
+      else: beta = self.beta0/i*1.0
       #Reset the environment to first world
       self.train_env.reset(roll_back=True)
       #Evaluate every policy for k episodes
@@ -68,36 +70,28 @@ class DaggerAgent(Agent):
           ep_reward = 0
           obs, _ = self.train_env.reset()
           self.G.reset()
-          path = self.get_path(self.G)
-          ftrs = torch.tensor(self.G.get_features([self.train_env.edge_from_action(a) for a in path], j))
-          probs = policy_curr.predict(ftrs)
-          probs = probs.detach().numpy()
+          # probs = probs.detach().numpy()
           if render:
+            path  = self.get_path(self.G)
+            ftrs  = torch.tensor(self.G.get_features(feas_actions, obs, j))
+            probs = policy_curr.predict(ftrs).detach().numpy()
             self.render_env(self.train_env, path, probs)
-          done = False
-          
+
+          done = False          
           while not done:
             print('Current iteration = {}, Iter episode = {}, Timestep = {}, beta = {}, Curr median reward = {}'.format(i+1, k+1, j, beta, curr_median_reward))
             path = self.get_path(self.G)
             feas_actions = self.filter_path(path, obs) #Only select from unevaluated edges in shortest path
-            ftrs = torch.tensor(self.G.get_features([self.train_env.edge_from_action(a) for a in feas_actions], j))
+            ftrs = torch.tensor(self.G.get_features(feas_actions, obs, j))
             probs = policy_curr.predict(ftrs)  
-            ftrsl = self.G.get_features([self.train_env.edge_from_action(a) for a in feas_actions], j).tolist()
+            ftrsl = self.G.get_features(feas_actions, obs, j).tolist()
             #Do random tie breaking
             probs = probs.detach().numpy()
             # print feas_actions, probs, ftrs
             idx_l = np.random.choice(np.flatnonzero(probs==probs.max())) #random tie breaking
-            idx_exp = self.expert(feas_actions, j, self.train_env, self.G)
-            idmix = idx_exp
-            if heuristic is not None: 
-              idx_heuristic = self.EXPERTS[heuristic](feas_actions, j, self.train_env, self.G) 
-              if mixed_rollin:
-                idmix = np.random.choice([idx_exp, idx_heuristic])
-              else:
-                idmix = idx_heuristic
+            idx_exp = self.expert(feas_actions, obs, j, self.G)
             #Aggregate the data
-            D.push(ftrs, torch.tensor([idx_exp]))
-            
+            D.push(ftrs, torch.tensor([idx_exp]))            
             for id in xrange(len(feas_actions)):
               Xdata.append(ftrsl[id])
               if id == idx_exp:
@@ -109,14 +103,21 @@ class DaggerAgent(Agent):
               idx = idx_l 
               # print('Learner action')
             else:
-              idx = idmix
-              if idx == idx_exp: print('Expert action')
+              idx = idx_exp
+              if heuristic is not None: 
+                idx_heuristic = self.EXPERTS[heuristic](feas_actions, obs, j, self.G) 
+                if mixed_rollin:
+                  idx = np.random.choice([idx_exp, idx_heuristic])
+                else:
+                  idx = idx_heuristic
+              if idx   == idx_exp: print('Expert action')
               elif idx == idx_heuristic: print('Heuristic action') 
+            
             act_id = feas_actions[idx]
-            act_e = self.train_env.edge_from_action(act_id)
+            # act_e = self.train_env.edge_from_action(act_id)
             # print ('Q_vals = {}, feasible_actions = {}, chosen edge = {}, features = {}'.format(q_vals, feas_actions, act_e, ftrs))
             obs,reward, done, info = self.train_env.step(act_id)
-            self.G.update_edge(act_e, obs[act_id]) #Update agent's internal graph          
+            self.G.update_edge(act_id, obs[act_id]) #Update agent's internal graph          
             j += 1
             ep_reward += reward
           

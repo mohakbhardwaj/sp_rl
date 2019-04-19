@@ -52,8 +52,8 @@ class HeuristicAgent(Agent):
       # ksp_arr = []
       obs, _ = self.env.reset()
       self.G.reset()
-      path = self.get_path(self.G)
       if render:
+        path = self.get_path(self.G)
         self.render_env(obs, path)
         raw_input('Press enter to start')
       j = 0

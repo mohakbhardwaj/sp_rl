@@ -18,3 +18,10 @@ class Agent(object):
     sp = graph.curr_shortest_path
     sp = self.env.to_edge_path(sp) 
     return sp
+
+  # def get_filtered_path(self, graph):
+  #   sp = graph.curr_shortest_path
+  #   # sp = self.env.to_edge_path(sp)
+  #   for node in path:
+       
+  #   return sp
