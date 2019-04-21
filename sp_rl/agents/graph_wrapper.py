@@ -30,61 +30,17 @@ class GraphWrapper(object):
     #   for v in self.G.vertices():
     #     vert_pos[v] = pos[v]
 
-    # if edge_priors is not None:
-    #   eprior = self.G.new_edge_property("double")
-    #   self.G.edge_properties['p_free'] = eprior
     if self.train_edge_statuses is not None:
       self.edge_prior_vec = np.mean(self.train_edge_statuses, axis=0)    
-    # for edge in self.G.edges():
-      # self.G.edge_properties['status'][edge] = -1
     
     self.curr_sp = self.shortest_path(self.source, self.target, 'weight', 'euc_dist')
     self.curr_sp_len = self.path_length(self.curr_sp)
-    # self.sp_iterator = all_paths(self.G, self.source, self.target)#, self.G.edge_properties['weight'], epsilon=0.1)
-    # tm = time.time()
-    # self.ksp_vec = self.ksp_centrality(num_paths=3000)
-    # print('ksp time = ', time.time()-tm)
     self.num_invalid_checked = 0.0
     self.num_valid_checked = 0.0
     self.total_checked = 0.0
 
-    # print self.k_shortest_paths(self.source, self.target, 10, 'weight')
-    # print self.curr_sp
-    
-    # self.ftr_params = ftr_params
-    # self.k_sp_nodes, self.k_sp, self.k_sp_len = self.k_shortest_paths(ftr_params['k'], attr='weight')
-    # self.k_sp_nodes_f = deepcopy(self.k_sp_nodes)
-    # self.k_sp_f = deepcopy(self.k_sp)
-    # self.k_sp_len_f = deepcopy(self.k_sp_len)
-    # print ('Time taken for k shortest paths = {}'.format(time.time()-start_t))
-    # nx.set_edge_attributes(self.G, 0.0, 'k_short_num')
-    # nx.set_edge_attributes(self.G, -1.0, 'k_short_len')
-    # for sp, l in zip(self.k_sp, self.k_sp_len):
-      # for e in sp:
-        # self.G[e[0]][e[1]]['k_short_num'] = self.G[e[0]][e[1]]['k_short_num'] + 1.0
-        # if self.G[e[0]][e[1]]['k_short_len'] == -1.0:
-          # self.G[e[0]][e[1]]['k_short_len'] = l
-        # else: self.G[e[0]][e[1]]['k_short_len'] = self.G[e[0]][e[1]]['k_short_len'] + l
-        # self.G[e[0]][e[1]]['k_short_eval'] = 0.0   
-
-
-  def reset(self):
-    # self.G = self.to_graph_tool(self.adj_mat) #Graph(directed=False)
-    # estat = self.G.new_edge_property("int")
-    # self.G.edge_properties['status'] = estat
-    
-    # if self.pos is not None:
-    #   vert_pos = self.G.new_vertex_property("vector<double>")
-    #   self.G.vp['pos'] = vert_pos
-    #   for v in self.G.vertices():
-    #     vert_pos[v] = self.pos[v]
-        
-    # if self.edge_priors is not None:
-    #   eprior = self.G.new_edge_property("double")
-    #   self.G.edge_properties['p_free'] = eprior
-    
+  def reset(self):   
     for edge in self.G.edges():
-      # self.G.edge_properties['status'][edge] = -1
       self.G.edge_properties['weight'][edge] = self.adj_mat[int(edge.source()), int(edge.target())]
 
     self.num_invalid_checked = 0.0
@@ -154,14 +110,20 @@ class GraphWrapper(object):
     Returns:
       features (array of floats)
     """
-    priors         = self.edge_prior_vec[eids]
-    posterior      = self.get_posterior(eids, obs)
-    forward_scores = 1.0 - np.arange(eids.size())/eids.size()
+    priors         = self.get_priors(eids)
+    posteriors     = self.get_posterior(eids, obs)
+    forward_scores = self.get_forward_scores(eids)
     delta_lens     = self.get_delta_len_util(eids)
     delta_progs    = self.get_delta_prog_util(eids)
-
-    features = np.concatenate(forward_scores, priors, posteriors, delta_lens, delta_progs)
+    # print priors.shape, posteriors.shape, forward_scores.shape, delta_lens.shape, delta_progs.shape
+    features = np.concatenate((forward_scores, priors, posteriors, delta_lens, delta_progs), axis=1)
+    # print features.shape
     return features
+  
+  def get_forward_scores(self, eids):
+    forward_scores = 1.0 - np.arange(len(eids))/len(eids)
+    return forward_scores.reshape(len(eids),1)
+
 
   def get_priors(self, idxs):
     """Calculate prior probability for edge being in collision
@@ -169,7 +131,7 @@ class GraphWrapper(object):
       idxs: array of edge ids to return prior over
     """
     priors = self.edge_prior_vec[idxs]
-    return priors
+    return priors.reshape(len(idxs),1)
 
   def get_posterior(self, idxs, obs, T=1.0):
     """Posterior over edges using current uncovered world to calculate probability of a training world
@@ -193,21 +155,21 @@ class GraphWrapper(object):
     posterior = self.train_edge_statuses * probs.reshape(probs.shape[0],1)
     posterior = np.sum(posterior , axis=0)
     post = 1.0 - posterior[idxs]
-    return post    
+    return post.reshape(len(idxs),1)    
   
   def get_delta_len_util(self, eids):
     delta_lens = np.zeros(len(eids))
     for i, eid in enumerate(eids):
       dl = self.edge_delta_len(eid)
       delta_lens[i] = dl
-    return delta_lens
+    return delta_lens.reshape(len(eids),1)
 
   def get_delta_prog_util(self, eids):
     delta_progs = np.zeros(len(eids))
     for i, eid in enumerate(eids):
       dp = self.edge_delta_prog(eid)
       delta_progs[i] = dp
-    return delta_progs
+    return delta_progs.reshape(len(eids),1)
 
   def get_ksp_centrality(self, eids):
     ksp_vec = self.ksp_centrality(500)

@@ -5,6 +5,7 @@ import os,sys
 sys.path.insert(0, os.path.abspath('..'))
 import gym
 import json
+import csv
 import matplotlib.pyplot as plt
 import numpy as np
 import time
@@ -14,7 +15,7 @@ from sp_rl.agents import DaggerAgent, GraphWrapper
 from sp_rl.learning import LinearNet, MLP, Policy
 
 torch.set_default_tensor_type(torch.DoubleTensor)
-# np.set_printoptions(threshold=np.nan, linewidth=np.inf)
+np.set_printoptions(threshold=sys.maxsize, linewidth=np.inf)
 
 
 def get_model_str(args, env):
@@ -24,8 +25,6 @@ def get_model_str(args, env):
               + "_" + args.model + "_" + args.expert
   model_str = model_str + "_" + str(args.beta0) + "_" + str(args.alpha)  \
                         + "_" + str(args.batch_size) + "_" + str(args.epochs) + "_" + str(args.weight_decay)
-  if args.lite_ftrs: model_str  = model_str + "_lite_ftrs"
-  else: model_str = model_str + "_" + str(args.k)
   model_str = model_str + "_" + str(args.seed_val) 
   return model_str
 
@@ -48,108 +47,101 @@ def main(args):
   train_epochs = args.epochs 
   weight_decay = args.weight_decay #L2 penalty
   
-  G = GraphWrapper(graph_info['adj_mat'], graph_info['source_node'], graph_info['target_node'], ftr_params=dict(k=k), pos=graph_info['pos'], edge_priors=graph_info['edge_priors'], lite_ftrs=args.lite_ftrs)
+  G = GraphWrapper(graph_info)
   if args.model == 'linear': 
-    model = LinearNet(G.num_features, 1)
+    model = LinearNet(5, 1)
     optim_method = 'sgd'
   elif args.model == 'mlp': 
-    model = MLP(d_input=G.num_features, d_layers=[100, 50], d_output=1, activation=torch.nn.ReLU)
+    model = MLP(d_input=5, d_layers=[10, 5], d_output=1, activation=torch.nn.ReLU)
     optim_method = 'adam'
   # print('Function approximation model = {}'.format(model))
   policy = Policy(model, batch_size, train_method='supervised', optim_method=optim_method, lr=alpha, weight_decay=weight_decay, use_cuda=args.use_cuda)
-  agent = DaggerAgent(env, valid_env, policy, beta0, args.expert, G, train_epochs)
+  agent  = DaggerAgent(env, valid_env, policy, beta0, args.expert, G, train_epochs)
   
   if not args.test:
     start_t = time.time()
-    # print args.num_iters, args.num_episodes_per_iter
-    rewards, avg_rewards, train_loss, train_avg_loss, validation_rewards, \
-    validation_stds, validation_avg_reward, data_points_per_iter, \
-    state_dict_per_iter, features_per_iter, labels_per_iter = agent.train(args.num_iters, args.num_episodes_per_iter, args.num_valid_episodes, heuristic=args.heuristic, re_init=args.re_init, mixed_rollin=args.mixed_rollin)
+    train_rewards, train_loss, train_accs, validation_reward, \
+    validation_accuracy, dataset_size, state_dict_per_iter, \
+    features_per_iter, labels_per_iter = agent.train(args.num_iters, args.num_episodes_per_iter, args.num_valid_episodes,\
+                                                     heuristic=args.heuristic, re_init=args.re_init, mixed_rollin=args.mixed_rollin)
     num_train_episodes = args.num_iters * args.num_episodes_per_iter
     # print('(Training) Number of episodes = {}, Total Reward = {}, Average reward = {}, \
     #         Best validation reward = {}, Train time = {}'.format(num_train_episodes, \
     #         sum(rewards), np.mean(rewards), max(validation_rewards), (time.time()-start_t)/60.0))
     # print('Saving weights and params')
     
-    results = dict()
-    results['train_rewards']          = rewards
-    results['train_avg_rewards']      = avg_rewards
-    results['train_loss']             = train_loss
-    results['train_avg_loss']         = train_avg_loss
-    results['validation_rewards']     = validation_rewards
-    results['validation_stds']        = validation_stds
-    results['validation_avg_rewards'] = validation_avg_reward
-    results['data_points_per_iter']   = data_points_per_iter
-    # if args.model == "linear":
-      # results['state_dict_per_iter']    = state_dict_per_iter
-    
-    # print('Saving Results')
+    results_dict = dict()
+    results_dict['train_rewards']       = train_rewards
+    results_dict['train_loss']          = train_loss
+    results_dict['train_accs']          = train_accs
+    results_dict['validation_rewards']  = validation_reward
+    results_dict['validation_accuracy'] = validation_accuracy
+    results_dict['dataset_size']        = dataset_size
+
     if not os.path.exists(args.folder):
       os.makedirs(args.folder)
     
-    with open(os.path.abspath(args.folder) + '/train_results.json', 'w') as fp:
-      json.dump(results, fp)
-        
+    with open(os.path.abspath(args.folder) + '/train_results.csv', 'w') as fp:
+      writer = csv.writer(fp, dialect=csv.excel)
+      for key, value in results_dict.items():
+        row=[key]
+        for v in value: row.append(v)
+        writer.writerow(row)
+
+    if args.model == "linear":
+      print('Learned weights: ')
+      agent.policy.model.print_parameters()
     model_str = get_model_str(args, env)
     torch.save(agent.policy.model.state_dict(), os.path.abspath(args.folder) + "/" + model_str)
     
-    for s in state_dict_per_iter:
-      st_dct = state_dict_per_iter[s]
-      file_name = model_str + "_" + 'policy_int_' + str(s)
-      torch.save(st_dct, os.path.abspath(args.folder)  + "/" + file_name)
+    # for s in state_dict_per_iter:
+    #   st_dct = state_dict_per_iter[s]
+    #   file_name = model_str + "_" + 'policy_int_' + str(s)
+    #   torch.save(st_dct, os.path.abspath(args.folder)  + "/" + file_name)
     
-    for it in features_per_iter:
-      file_name_f = "features_" + str(it)
-      file_name_l = "labels_" + str(it)
-      with open(os.path.abspath(args.folder) + '/' + file_name_f, 'w') as fp:
-        json.dump(features_per_iter[it], fp)
-      with open(os.path.abspath(args.folder) + '/' + file_name_l, 'w') as fp:
-        json.dump(labels_per_iter[it], fp)
+    # for it in features_per_iter:
+    #   file_name_f = "features_" + str(it)
+    #   file_name_l = "labels_" + str(it)
+    #   with open(os.path.abspath(args.folder) + '/' + file_name_f, 'w') as fp:
+    #     json.dump(features_per_iter[it], fp)
+    #   with open(os.path.abspath(args.folder) + '/' + file_name_l, 'w') as fp:
+    #     json.dump(labels_per_iter[it], fp)
 
 
     if args.plot:
       print('Plot train results')
       fig1, ax1 = plt.subplots(3,2)
-      ax1[0][0].plot(range(num_train_episodes), rewards)
-      ax1[0][0].set_xlabel('Episodes')
-      ax1[0][0].set_ylabel('Episode Reward')
+      ax1[0][0].plot(range(args.num_iters), np.median(train_rewards, axis=1))
+      ax1[0][0].set_xlabel('DAgger iteration')
+      ax1[0][0].set_ylabel('Median Reward')
 
-      ax1[0][1].plot(range(num_train_episodes), avg_rewards)
-      ax1[0][1].set_xlabel('Episodes')
-      ax1[0][1].set_ylabel('Average Reward')
+      ax1[0][1].plot(range(args.num_iters), np.mean(train_accs, axis=1))
+      ax1[0][1].set_xlabel('DAgger iteration')
+      ax1[0][1].set_ylabel('Avg. accuracy')
       
       ax1[1][0].plot(range(args.num_iters), train_loss)
-      ax1[1][0].set_xlabel('Iterations')
+      ax1[1][0].set_xlabel('DAgger iteration')
       ax1[1][0].set_ylabel('Regression Loss')
 
-      ax1[1][1].plot(range(args.num_iters), train_avg_loss)
-      ax1[1][1].set_xlabel('Iterations')
-      ax1[1][1].set_ylabel('Regression Average Loss')
-      fig1.suptitle('Train results', fontsize=16)
-
-      
-      ax1[2][0].errorbar(range(args.num_iters), validation_rewards, yerr=validation_stds)
+      lquants = np.quantile(validation_reward, 0.4, axis=1).reshape(1, args.num_iters)
+      uquants = np.quantile(validation_reward, 0.6, axis=1).reshape(1, args.num_iters)
+      yerr=np.concatenate((lquants, uquants), axis=0)
+      ax1[2][0].errorbar(range(args.num_iters), np.median(validation_reward,axis=1), yerr=yerr)
       ax1[2][0].set_xlabel('Iterations')
       ax1[2][0].set_ylabel('Validation reward')
 
-      ax1[2][1].plot(range(args.num_iters), validation_avg_reward)
-      ax1[2][1].set_xlabel('Iterations')
-      ax1[2][1].set_ylabel('Average valid reward')
+      ax1[2][1].plot(range(args.num_iters), np.mean(validation_accuracy, axis=1))
+      ax1[2][1].set_xlabel('DAgger iteration')
+      ax1[2][1].set_ylabel('Validation average accuracy')
 
       fig1.suptitle('Train results', fontsize=16)
-      fig1.savefig(args.folder + 'train_results')
-      plt.show(block=False)
+      fig1.savefig(args.folder + '/train_results.pdf', bbox_inches='tight')
+      plt.show(block=True)
 
-    # test_env = gym.make(args.valid_env)
-    # test_env.seed(args.seed_val)
-    # _, _ = test_env.reset()
     _,_ = valid_env.reset(roll_back=True)
-    if model == "linear":
-      print('Learned weights = {}'.format(agent.policy.model.state_dict()))
-    test_rewards_dict, test_avg_rewards_dict, test_acc_dict = agent.test(valid_env, agent.policy, args.num_test_episodes, render=args.render, step=args.step)
+    test_rewards_dict, test_acc_dict = agent.test(valid_env, agent.policy, args.num_test_episodes, render=args.render, step=args.step)
 
   else:
-    print args.test
     if not args.model_file:
       raise ValueError, 'Model file not specified'
     policy.model.load_state_dict(torch.load(os.path.join(args.folder, args.model_file)))
@@ -158,11 +150,10 @@ def main(args):
     test_env.seed(args.seed_val)
     _, _ = test_env.reset()
     # raw_input('Weights loaded. Press enter to start testing...')
-    test_rewards_dict, test_avg_rewards_dict, test_acc_dict = agent.test(test_env, policy, args.num_test_episodes, render=args.render, step=args.step)
+    test_rewards_dict, test_acc_dict = agent.test(test_env, policy, args.num_test_episodes, render=args.render, step=args.step)
   
-  test_rewards     = [it[1] for it in sorted(test_rewards_dict.items(), key=operator.itemgetter(0))]
-  test_avg_rewards = [it[1] for it in sorted(test_avg_rewards_dict.items(), key=operator.itemgetter(0))]
-  print test_rewards
+  test_rewards = [it[1] for it in sorted(test_rewards_dict.items(), key=operator.itemgetter(0))]
+  test_accs    = [it[1] for it in sorted(test_acc_dict.items(), key=operator.itemgetter(0))]
   test_results = dict()
   test_results['test_rewards'] = test_rewards_dict
   test_results['test_acc'] = test_acc_dict
@@ -171,9 +162,9 @@ def main(args):
   # with open(os.path.abspath(args.folder) + '/test_results.json', 'w') as fp:
   #   json.dump(test_results, fp)
 
-  print('(Testing) Number of episodes = {}, Total Reward = {}, Average reward = {}, \
-          Std. Dev = {}'.format(args.num_test_episodes, sum(test_rewards), \
-          np.mean(test_rewards), np.std(test_rewards)))
+  print('(Testing) Number of episodes = {}, Total Reward = {}, Average reward = {},\
+          Std. Dev = {}, Median reward = {}'.format(args.num_test_episodes, sum(test_rewards), \
+          np.mean(test_rewards), np.std(test_rewards), np.median(test_rewards)))
 
   if args.plot:
     print('Plot test results and save')
@@ -182,7 +173,7 @@ def main(args):
     ax2[0].set_xlabel('Episodes')
     ax2[0].set_ylabel('Episode Reward')
 
-    ax2[1].plot(range(len(test_avg_rewards)), test_avg_rewards)
+    ax2[1].plot(range(len(test_accs)), test_accs)
     ax2[1].set_xlabel('Episodes')
     ax2[1].set_ylabel('Average Reward')
 
@@ -201,7 +192,7 @@ if __name__ == "__main__":
   parser.add_argument("--num_valid_episodes", type=int, help='Number of validation episodes')
   parser.add_argument("--num_test_episodes", type=int, help='Number of test episodes')
   parser.add_argument("--model", type=str, help='Linear or MLP')
-  parser.add_argument("--expert", type=str, help='Expert to eb used')
+  parser.add_argument("--expert", type=str, help='Expert to be used')
   parser.add_argument('--folder', required=True, type=str, help='Folder to load params.json and save results.json')
   parser.add_argument('--beta0', type=float, default=0.7, help='Value of mixing parameter after first episode of behavior cloning (decayed exponentially)')
   parser.add_argument('--alpha', type=float, default=0.01, help='Initial learning rate')
@@ -212,7 +203,6 @@ if __name__ == "__main__":
   parser.add_argument("--model_file", type=str, help="File to load model parameters during test phase")
   parser.add_argument('--render', action='store_true', help='Render during testing')
   parser.add_argument("--step", action='store_true', help='If true, then agent pauses before executing each action to show rendering')
-  parser.add_argument("--lite_ftrs", action='store_true', help='Uses only bare minimum of features')
   parser.add_argument("--use_cuda", action='store_true', help='Use cuda for training')
   parser.add_argument("--seed_val", type=int, required=True, help='Seed value for training')
   parser.add_argument("--re_init", action='store_true', help='Whether to re-initialize policy at every iteration of DAgger training')

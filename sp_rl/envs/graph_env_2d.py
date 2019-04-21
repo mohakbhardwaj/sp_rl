@@ -143,25 +143,19 @@ class GraphEnv2D(gym.Env):
       self.first_reset=True
   
     #Sample worlds till you sample a solvable one
-    self.world_num=2
     solvable = False
     if not self.first_reset:
       while not solvable:
         if self.mode == "train":
           self.world_num = self.world_arr[self.curr_idx]#np.random.choice(self.world_arr)
-          self.world_num=2
         else:
           self.world_num = self.world_arr[self.curr_idx]
-          self.world_num=2
-        # self.word_num = 2
         self.curr_idx = (self.curr_idx + 1) % self.max_envs
         self.curr_edge_stats = self.edge_statuses[self.world_num-self.file_idxing, :] #Sample a random world from the dataset
         self.reinit_graph_status(self.curr_edge_stats)
         self.sp, self.sp_edge = shortest_path(self.G, self.G.vertex(self.source_node), self.G.vertex(self.target_node), self.G.edge_properties['weight'])
-        print(self.path_length(self.sp_edge))
         if len(self.sp) > 0:
           solvable=True
-      # self.sp_edge = self.to_edge_path(self.sp)
       self.im_num =  self.world_num
       im_name = str(self.im_num)
       if self.file_idxing == 1: im_name = "world_" + str(self.im_num)

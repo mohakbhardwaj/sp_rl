@@ -8,30 +8,39 @@ def init_weights(m):
     if m.bias is not None:
       m.bias.data.fill_(0.0)
 
+class TorchModel(nn.Module):
+  def __init__(self):
+    super(TorchModel, self).__init__()
 
+  def print_gradients(self):
+    for name, param in self.named_parameters():
+      if param.requires_grad:
+        print("Layer = {}, grad norm = {}".format(name, param.grad.data.norm(2).item()))
+  
+  def get_gradient_dict(self):
+    grad_dict = {}
+    for name, param in self.named_parameters():
+      if param.requires_grad:
+        grad_dict[name] = param.grad.data.norm(2).item()
+    return grad_dict
+    
+  def print_parameters(self):
+    for name, param in self.named_parameters():
+      if param.requires_grad:
+        print name, param.data  
 
-class LinearNet(nn.Module):
+class LinearNet(TorchModel):
   def __init__(self, n_in, n_out):
     super(LinearNet, self).__init__()
     self.fc = nn.Linear(n_in, n_out)
     
   def forward(self, x):
-    # print(x.shape)
-    # print(self.fc.weight.shape)
-    # print(self.fc.bias.shape)
     x = self.fc(x.view(x.shape[0], -1))
     return x
   
-  def print_parameters(self):
-    for name, param in self.named_parameters():
-      if param.requires_grad:
-        print name, param.data
 
 
-  # def init_weights(self):
-  #   self.fc.reset_parameters()
-
-class MLP(nn.Module):
+class MLP(TorchModel):
   def __init__(self, d_input, d_layers, d_output, activation=nn.Tanh,
                use_dropout=False, dropout_prob=0.5, norm=None, use_cuda=False):
     '''

@@ -9,15 +9,22 @@ def load_raw_data(file_paths):
   envs = [] 
   raw_acc = []
   for f_name in file_paths:
-    raw_data = {}
     with open(os.path.abspath(f_name), 'r') as fp:
       data = json.load(fp)
       raw_data = data['test_rewards']
+      
       if "test_acc" in data:
         raw_data_acc=data['test_acc']
-        raw_acc.append(list(raw_data_acc.values()))
-    raw_results.append(list(raw_data.values()))
-    envs.append(list(raw_data.keys()))  
+        raw_acc.append(raw_data_acc.values())
+    
+    print(len(raw_data.keys()))
+    vals = []
+    for k,v in raw_data.iteritems():
+      vals.append(int(v))
+    
+    raw_results.append(np.array(vals))
+    envs.append(raw_data.keys())
+    #print np.stack(raw_results)  
   return np.array(raw_results), raw_acc, np.array(envs)
 
 def calculate_metrics(raw_results):
@@ -54,8 +61,3 @@ if __name__ == "__main__":
   parser.add_argument('--files', type=str, required=True, nargs='+')
   args = parser.parse_args()
   main(args)
-
-
-# median
-# 40% lower quantile
-# 60% upper quantile

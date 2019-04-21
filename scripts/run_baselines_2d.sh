@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 envs=('graphEnv2DValidation-v1' 'graphEnv2DValidation-v2' 'graphEnv2DValidation-v3' 'graphEnv2DValidation-v4' 'graphEnv2DValidation-v5'\
-             'graphEnv2DValidation-v6' 'graphEnv2DValidation-v7' 'graphEnv2DValidation-v8')
-#envs=('graphEnv2DTest-v1' 'graphEnv2DTest-v2' 'graphEnv2DTest-v3' 'graphEnv2DTest-v4' 'graphEnv2DTest-v5'\
-#            'graphEnv2DTest-v6' 'graphEnv2DTest-v7' 'graphEnv2DTest-v8')
+            'graphEnv2DValidation-v6' 'graphEnv2DValidation-v7' 'graphEnv2DValidation-v8')
 
 
 base_folder='../../sp_rl_new_experiments/'
@@ -10,13 +8,10 @@ folders=(${base_folder}'dataset_2d_1/lsp_selectors_test' ${base_folder}'dataset_
          ${base_folder}'dataset_2d_4/lsp_selectors_test' ${base_folder}'dataset_2d_5/lsp_selectors_test' ${base_folder}'dataset_2d_6/lsp_selectors_test'\
          ${base_folder}'dataset_2d_7/lsp_selectors_test' ${base_folder}'dataset_2d_8/lsp_selectors_test')
 
-run_idxs=(0 1 2 3 4 5 6 7)
+run_idxs=(5 6)
 
 num_episodes=200
 seed_val=0
-
-
-
 
 echo `pwd`
 cd ../examples

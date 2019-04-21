@@ -167,7 +167,7 @@ class HeuristicAgent(Agent):
 
   def select_delta_len(self, act_ids, obs,iter, G):
     delta_lens = G.get_delta_len_util(act_ids)
-    idx_lens = np.argmax(delta_lens)#np.random.choice(np.flatnonzero(delta_lens == delta_lens.max()))
+    idx_lens = np.argmax(delta_lens)
     return act_ids[idx_lens]
 
   def select_delta_prog(self, act_ids, obs, iter, G):
@@ -184,7 +184,7 @@ class HeuristicAgent(Agent):
 
   def select_ksp_centrality(self, act_ids, obs, iter, G):
     ksp_centr = G.get_ksp_centrality(act_ids)
-    print ksp_centr
+    # print ksp_centr
     return act_ids[np.argmax(ksp_centr)]
 
 
@@ -203,20 +203,25 @@ class HeuristicAgent(Agent):
 
 
   def length_oracle(self, act_ids, obs, iter, G, horizon=2):
-    curr_sp = G.curr_shortest_path
-    curr_sp_len = G.curr_shortest_path_len
-    scores = np.array([0.0]*len(act_ids))
-    for (j, action) in enumerate(act_ids):
-      gt_edge = self.env.gt_edge_from_action(action)
-      edge = (gt_edge.source(), gt_edge.target())
-      if self.env.G.edge_properties['status'][gt_edge] == 0:
-        G.update_edge(edge, 0)
-        new_sp = G.curr_shortest_path
-        new_sp_len = G.curr_shortest_path_len
-        scores[j] = scores[j] + (new_sp_len-curr_sp_len)
-        G.update_edge(edge, -1, 0)
-    action = act_ids[np.argmax(scores)]
-    return action
+    # curr_sp = G.curr_shortest_path
+    # curr_sp_len = G.curr_shortest_path_len
+    # scores = np.array([0.0]*len(act_ids))
+    # for (j, action) in enumerate(act_ids):
+    #   gt_edge = self.env.gt_edge_from_action(action)
+    #   edge = (gt_edge.source(), gt_edge.target())
+    #   if self.env.G.edge_properties['status'][gt_edge] == 0:
+    #     G.update_edge(edge, 0)
+    #     new_sp = G.curr_shortest_path
+    #     new_sp_len = G.curr_shortest_path_len
+    #     scores[j] = scores[j] + (new_sp_len-curr_sp_len)
+    #     G.update_edge(edge, -1, 0)
+    # action = act_ids[np.argmax(scores)]
+    scores = np.zeros(len(act_ids))
+    for i, act_id in enumerate(act_ids):
+      if self.env.curr_edge_stats[act_id] == 0:
+        scores[i] = G.get_delta_len_util([act_id])
+
+    return act_ids[np.argmax(scores)]
 
   def length_oracle_2(self, act_ids, obs, iter, G, horizon=2):
     curr_sp = G.curr_shortest_path

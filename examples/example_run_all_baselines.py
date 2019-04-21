@@ -8,7 +8,7 @@ import gym
 import sp_rl
 from sp_rl.agents import HeuristicAgent
 import json
-selectors = ['select_prior', 'select_posterior', 'select_lookahead_len', 'select_lookahead_prog', 'select_posterior_delta_len']
+selectors = ['length_oracle']
 # selectors = ['length_oracle_2', 'select_lookahead_len']
 
 def main(args):

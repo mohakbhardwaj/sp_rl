@@ -26,8 +26,8 @@ class QFunction():
     return self.model(ftrs)
 
   def collate_fn(self, batch):
-    action = [item[0] for item in batch]
-    reward = [item[1] for item in batch]
+    action     = [item[0] for item in batch]
+    reward     = [item[1] for item in batch]
     next_state = [item[2] for item in batch]
     # target = torch.LongTensor(target)
     return [action, reward, next_state]
@@ -91,26 +91,26 @@ class QFunction():
 class Policy():
   def __init__(self, model, batch_size, train_method='supervised', optim_method='adam', lr=0.001, momentum=0.9, weight_decay=0.1, use_cuda=False):
     self.use_cuda = torch.cuda.is_available() if use_cuda else False
-    self.device = torch.device('cuda') if self.use_cuda else torch.device('cpu') 
-    self.model = model
+    self.device   = torch.device('cuda') if self.use_cuda else torch.device('cpu') 
+    self.model    = model
     self.train_method = train_method
     self.batch_size = batch_size
-    if self.train_method == 'supervised':
-      self.criterion = nn.CrossEntropyLoss()
+    # if self.train_method == 'supervised':
+    #   self.criterion = nn.CrossEntropyLoss()
+    self.criterion = nn.MSELoss()
     if optim_method =='adam':
       self.optimizer = optim.Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay)
     elif optim_method == 'sgd':
       self.optimizer = optim.SGD(self.model.parameters(), lr=lr, weight_decay=weight_decay)
+  
 
   def predict(self, ftrs):
     scores = self.model(ftrs)
-    # print scores
-    probs = nn.LogSoftmax(dim=0)(scores) 
-    # print scores, probs
-    return probs
+    # probs = nn.LogSoftmax(dim=0)(scores) 
+    return scores
 
   def collate_fn(self, batch):
-    data = [item[0] for item in batch]
+    data   = [item[0] for item in batch]
     target = [item[1] for item in batch]
     target = torch.LongTensor(target)
     return [data, target]
@@ -119,63 +119,39 @@ class Policy():
     trainloader = DataLoader(dataset=D, 
                              batch_size=self.batch_size,
                              shuffle=True, 
-                             collate_fn = self.collate_fn,
                              num_workers=0)
     data_pts = len(D)
-    # print('Number of datapoints = {}'.format(data_pts))
     num_batches = float(data_pts/self.batch_size)
     if num_batches == 0.0: num_batches = 1
     avg_loss = 0.0
     self.model.to(self.device)
-    # print num_batches, data_pts, epochs
     for epoch in xrange(epochs):
       running_loss = 0.0
-      for i, data in enumerate(trainloader,0):
-        if self.train_method == 'supervised':
-          state, targets = data
-          # state.to(self.device), target.to(self.device)
-          loss = self.cross_entropy_loss(state, targets)
-          # print outputs
-          # for i in xrange(actions.shape[0]):
-            # print actions[i,:], targets[i,:]
-        # elif self.train_method == 'reinforcement':
-        #   action, next_state, reward = data
-        #   q_vals = self.predict(next_state)
-        #   outputs = self.model(actions)
-
-        #zero the parameter gradients
+      for i, sample in enumerate(trainloader,0):
+        # if self.train_method == 'supervised':
+        states = sample['state'].to(self.device)
+        targets = sample['target'].to(self.device)
+        states.requires_grad_(True)
+        scores = self.predict(states)
+        loss = self.criterion(scores, targets)
         self.optimizer.zero_grad()
-        
-        # print (loss)
-        # loss = self.criterion(outputs, targets)
         loss.backward()
-
+        # print('Epoch = {}, batch = {}, Gradients = '.format(epoch, i))
+        self.model.print_gradients()
         self.optimizer.step()
-        # print ('step done')
-
-        #print statistics
-        running_loss += loss.item()
-        # if i % 10 == 9:
-        #   print('[%d, %5d] loss: %.3f' %
-        #           (epoch + 1, i + 1, running_loss / (epoch*num_batches + i*1.0)))
-        # # raw_input('...')
-      
+        running_loss += loss.item() 
       avg_loss += running_loss
     
     avg_loss = avg_loss/(epochs*num_batches*1.0)
-  
-    # print('Policy trained. Average loss = {}'.format(avg_loss))
     return avg_loss
 
   def cross_entropy_loss(self, state, targets):
     loss = 0.0
     for i in xrange(len(state)):
       ftrs = state[i]
-      ftrs = ftrs.to(self.device)
       logprobs = self.predict(ftrs)
-      curr_t = targets[i].to(self.device)
-      loss += -1.0*logprobs[curr_t] #-1.0*torch.log(probs[curr_t])#Do cross entropy loss here
+      curr_t = targets[i]
+      loss += -1.0*logprobs[curr_t] 
+      
     loss = loss/len(state)*1.0
-    # print "Loss = ", loss
-    # raw_input('..')
     return loss

@@ -7,7 +7,7 @@ import sp_rl
 import networkx as nx
 from agent import Agent
 from copy import deepcopy
-from sp_rl.learning import LinearQFunction, ExperienceBuffer, select_forward, select_backward, select_alternate, select_prior, select_lookahead
+from sp_rl.learning import LinearQFunction, ExperienceBuffer, select_forward, select_backward, select_alternate, select_prior
 
 class AggrevateAgent(Agent):
   def __init__(self, train_env, valid_env, qfun, beta0, T, expert_str, G, epochs):
