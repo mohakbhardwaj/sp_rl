@@ -42,7 +42,7 @@ def main(args):
 
   beta0        = args.beta0
   alpha        = args.alpha
-  k            = args.k
+  gamma            = args.gamma
   batch_size   = args.batch_size
   train_epochs = args.epochs 
   weight_decay = args.weight_decay #L2 penalty
@@ -56,12 +56,12 @@ def main(args):
     optim_method = 'adam'
   # print('Function approximation model = {}'.format(model))
   policy = Policy(model, batch_size, train_method='supervised', optim_method=optim_method, lr=alpha, weight_decay=weight_decay, use_cuda=args.use_cuda)
-  agent  = DaggerAgent(env, valid_env, policy, beta0, args.expert, G, train_epochs)
+  agent  = DaggerAgent(env, valid_env, policy, beta0, gamma, args.expert, G, train_epochs)
   
   if not args.test:
     start_t = time.time()
     train_rewards, train_loss, train_accs, validation_reward, \
-    validation_accuracy, dataset_size, state_dict_per_iter, \
+    validation_accuracy, dataset_size, weights_per_iter, \
     features_per_iter, labels_per_iter = agent.train(args.num_iters, args.num_episodes_per_iter, args.num_valid_episodes,\
                                                      heuristic=args.heuristic, re_init=args.re_init, mixed_rollin=args.mixed_rollin)
     num_train_episodes = args.num_iters * args.num_episodes_per_iter
@@ -69,7 +69,7 @@ def main(args):
     #         Best validation reward = {}, Train time = {}'.format(num_train_episodes, \
     #         sum(rewards), np.mean(rewards), max(validation_rewards), (time.time()-start_t)/60.0))
     # print('Saving weights and params')
-    
+    print('Training time = ', time.time() - start_t)
     results_dict = dict()
     results_dict['train_rewards']       = train_rewards
     results_dict['train_loss']          = train_loss
@@ -93,6 +93,12 @@ def main(args):
       agent.policy.model.print_parameters()
     model_str = get_model_str(args, env)
     torch.save(agent.policy.model.state_dict(), os.path.abspath(args.folder) + "/" + model_str)
+
+    if args.model == 'linear':
+      with open(os.path.abspath(args.folder) + '/weights_per_iter.json', 'w') as fp:
+        json.dump(weights_per_iter, fp)
+
+
     
     # for s in state_dict_per_iter:
     #   st_dct = state_dict_per_iter[s]
@@ -122,21 +128,22 @@ def main(args):
       ax1[1][0].plot(range(args.num_iters), train_loss)
       ax1[1][0].set_xlabel('DAgger iteration')
       ax1[1][0].set_ylabel('Regression Loss')
+   
+      if args.num_valid_episodes > 0:
+        lquants = np.quantile(validation_reward, 0.4, axis=1).reshape(1, args.num_iters)
+        uquants = np.quantile(validation_reward, 0.6, axis=1).reshape(1, args.num_iters)
+        yerr=np.concatenate((lquants, uquants), axis=0)
+        ax1[2][0].errorbar(range(args.num_iters), np.median(validation_reward,axis=1), yerr=yerr)
+        ax1[2][0].set_xlabel('Iterations')
+        ax1[2][0].set_ylabel('Validation reward')
 
-      lquants = np.quantile(validation_reward, 0.4, axis=1).reshape(1, args.num_iters)
-      uquants = np.quantile(validation_reward, 0.6, axis=1).reshape(1, args.num_iters)
-      yerr=np.concatenate((lquants, uquants), axis=0)
-      ax1[2][0].errorbar(range(args.num_iters), np.median(validation_reward,axis=1), yerr=yerr)
-      ax1[2][0].set_xlabel('Iterations')
-      ax1[2][0].set_ylabel('Validation reward')
-
-      ax1[2][1].plot(range(args.num_iters), np.mean(validation_accuracy, axis=1))
-      ax1[2][1].set_xlabel('DAgger iteration')
-      ax1[2][1].set_ylabel('Validation average accuracy')
+        ax1[2][1].plot(range(args.num_iters), np.mean(validation_accuracy, axis=1))
+        ax1[2][1].set_xlabel('DAgger iteration')
+        ax1[2][1].set_ylabel('Validation average accuracy')
 
       fig1.suptitle('Train results', fontsize=16)
       fig1.savefig(args.folder + '/train_results.pdf', bbox_inches='tight')
-      plt.show(block=True)
+      plt.show(block=False)
 
     _,_ = valid_env.reset(roll_back=True)
     test_rewards_dict, test_acc_dict = agent.test(valid_env, agent.policy, args.num_test_episodes, render=args.render, step=args.step)
@@ -152,6 +159,8 @@ def main(args):
     # raw_input('Weights loaded. Press enter to start testing...')
     test_rewards_dict, test_acc_dict = agent.test(test_env, policy, args.num_test_episodes, render=args.render, step=args.step)
   
+
+
   test_rewards = [it[1] for it in sorted(test_rewards_dict.items(), key=operator.itemgetter(0))]
   test_accs    = [it[1] for it in sorted(test_acc_dict.items(), key=operator.itemgetter(0))]
   test_results = dict()
@@ -159,8 +168,8 @@ def main(args):
   test_results['test_acc'] = test_acc_dict
   print ('Average test rewards = {}'.format(np.mean(test_rewards)))
   print('Dumping results')
-  # with open(os.path.abspath(args.folder) + '/test_results.json', 'w') as fp:
-  #   json.dump(test_results, fp)
+  with open(os.path.abspath(args.folder) + '/test_results.json', 'w') as fp:
+    json.dump(test_results, fp)
 
   print('(Testing) Number of episodes = {}, Total Reward = {}, Average reward = {},\
           Std. Dev = {}, Median reward = {}'.format(args.num_test_episodes, sum(test_rewards), \
@@ -196,7 +205,7 @@ if __name__ == "__main__":
   parser.add_argument('--folder', required=True, type=str, help='Folder to load params.json and save results.json')
   parser.add_argument('--beta0', type=float, default=0.7, help='Value of mixing parameter after first episode of behavior cloning (decayed exponentially)')
   parser.add_argument('--alpha', type=float, default=0.01, help='Initial learning rate')
-  parser.add_argument('--k'    , type=int, default=1, help='Feature parameter - Number of future paths to consider (only used if lite_ftrs is off)')
+  parser.add_argument('--gamma'    , type=float, default=1.0, help='Probability of keeping a data point')
   parser.add_argument('--batch_size', type=int, default=32, help='Batch size for SGD')
   parser.add_argument('--epochs', type=int, default=2, help='Number of epochs for SGD')
   parser.add_argument('--weight_decay', type=float, default=0.2, help='L2 Regularization')

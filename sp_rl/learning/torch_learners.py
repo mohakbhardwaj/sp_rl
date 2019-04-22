@@ -102,7 +102,7 @@ class Policy():
       self.optimizer = optim.Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay)
     elif optim_method == 'sgd':
       self.optimizer = optim.SGD(self.model.parameters(), lr=lr, weight_decay=weight_decay)
-  
+    print self.optimizer
 
   def predict(self, ftrs):
     scores = self.model(ftrs)

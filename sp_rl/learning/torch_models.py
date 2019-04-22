@@ -27,7 +27,15 @@ class TorchModel(nn.Module):
   def print_parameters(self):
     for name, param in self.named_parameters():
       if param.requires_grad:
-        print name, param.data  
+        print name, param.data
+
+  def serializable_parameter_dict(self):
+    serializable_dict = {}
+    for name, param in self.named_parameters():
+      if param.requires_grad:
+        serializable_dict[name] = param.tolist()
+    return serializable_dict
+  
 
 class LinearNet(TorchModel):
   def __init__(self, n_in, n_out):

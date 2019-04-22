@@ -11,7 +11,7 @@ from copy import deepcopy
 from sp_rl.learning import LinearNet, ExperienceBuffer, select_forward, select_backward, select_alternate, select_prior, select_posterior, select_ksp_centrality, select_posteriorksp, select_delta_len, select_delta_prog, select_posterior_delta_len, length_oracle, length_oracle_2, init_weights
 
 class DaggerAgent(Agent):
-  def __init__(self, train_env, valid_env, policy, beta0, expert_str, G, epochs):
+  def __init__(self, train_env, valid_env, policy, beta0, gamma, expert_str, G, epochs):
     super(DaggerAgent, self).__init__(train_env)
     self.EXPERTS = {'select_expand': None,
                     'select_forward':   select_forward,
@@ -31,19 +31,21 @@ class DaggerAgent(Agent):
     self.valid_env = valid_env
     self.expert = self.EXPERTS[expert_str]
     self.beta0 = beta0
+    self.gamma = gamma
     self.G = G
     self.train_epochs = epochs
     self.policy = policy
 
 
-  def train(self, num_iterations, num_eval_episodes, num_valid_episodes, heuristic = None, re_init=False, render=False, step=False, mixed_rollin=False):
+  def train(self, num_iterations, num_eval_episodes, num_valid_episodes,
+            heuristic = None, re_init=False, render=False, step=False, mixed_rollin=False):
     train_rewards = np.zeros(shape=(num_iterations, num_eval_episodes))
     train_accs = np.zeros(shape=(num_iterations, num_eval_episodes))
     train_loss = np.zeros(shape=num_iterations)
     validation_reward   = np.zeros(shape=(num_iterations, num_valid_episodes)) 
     validation_accuracy = np.zeros(shape=(num_iterations, num_valid_episodes))
     dataset_size        = np.zeros(shape=num_iterations) 
-    state_dict_per_iter = {}
+    weights_per_iter = {}
     features_per_iter = {}
     labels_per_iter = {}
 
@@ -84,16 +86,18 @@ class DaggerAgent(Agent):
             idx_l = np.random.choice(np.flatnonzero(scores==scores.max())) #random tie breaking
             idx_exp = self.expert(feas_actions, obs, j, self.G, self.train_env)
             #Aggregate the data
-            targets = torch.zeros(len(feas_actions),1)
-            targets[idx_exp] = 1.0
-            D.push(ftrs, targets)            
+            if np.random.sample() > self.gamma:
+              print('Adding to dataset')
+              targets = torch.zeros(len(feas_actions),1)
+              targets[idx_exp] = 1.0
+              D.push(ftrs, targets)            
 
-            for id in xrange(len(feas_actions)):
-              Xdata.append(ftrsl[id])
-              if id == idx_exp:
-                Ydata.append(1)
-              else:
-                Ydata.append(0)
+              for id in xrange(len(feas_actions)):
+                Xdata.append(ftrsl[id])
+                if id == idx_exp:
+                  Ydata.append(1)
+                else:
+                  Ydata.append(0)
 
             #Execute mixture
             if np.random.sample() > beta: idx = idx_l 
@@ -127,7 +131,7 @@ class DaggerAgent(Agent):
       curr_train_loss = policy_curr.train(D, self.train_epochs)
       policy_curr.model.print_parameters()
       dataset_size[i] = (len(D))
-      state_dict_per_iter[i] = deepcopy(policy_curr.model.state_dict())
+      weights_per_iter[i] = policy_curr.model.serializable_parameter_dict()
       features_per_iter[i] = Xdata
       labels_per_iter[i]   = Ydata
       train_loss[i] = curr_train_loss
@@ -149,7 +153,7 @@ class DaggerAgent(Agent):
         else: print('Keeping old policy')
         validation_reward[i,:]   = valid_rewards
         validation_accuracy[i,:] = valid_accs
-    return train_rewards, train_loss, train_accs, validation_reward, validation_accuracy, dataset_size, state_dict_per_iter, features_per_iter, labels_per_iter
+    return train_rewards, train_loss, train_accs, validation_reward, validation_accuracy, dataset_size, weights_per_iter, features_per_iter, labels_per_iter
 
 
   def test(self, env, policy, num_episodes, render=False, step=False):
@@ -167,6 +171,7 @@ class DaggerAgent(Agent):
         self.G.reset()
         if render:
           path = self.get_path(self.G)
+          feas_actions = self.filter_path(path, obs)
           ftrs = torch.tensor(self.G.get_features(feas_actions, obs, j))
           scores = policy.predict(ftrs)
           scores = scores.detach().numpy()
@@ -183,7 +188,7 @@ class DaggerAgent(Agent):
             self.render_env(env, feas_actions, scores)
           #select greedy action
           idx = np.random.choice(np.flatnonzero(scores==scores.max())) #random tie breaking
-          idx_exp = self.expert(feas_actions, obs, j, self.G, self.train_env)
+          idx_exp = self.expert(feas_actions, obs, j, self.G, env)
           if idx == idx_exp: ep_acc = ep_acc + 1.0
 
           act_id = feas_actions[idx]
@@ -195,7 +200,8 @@ class DaggerAgent(Agent):
           j += 1
         # print('Final path = {}'.format([env.edge_from_action(a) for a in path]))
         if render:
-          fr = torch.tensor(self.G.get_features([env.edge_from_action(a) for a in path], j))
+          # feas_actions = self.filter_path(path, obs)
+          fr = torch.tensor(self.G.get_features(path, obs, j))
           sc = policy.predict(fr)
           self.render_env(env, path, sc.detach().numpy())
           raw_input('Press Enter')
