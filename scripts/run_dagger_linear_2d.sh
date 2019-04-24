@@ -11,7 +11,7 @@ folders=(${base_folder}'dataset_2d_1/dagger_linear' ${base_folder}'dataset_2d_2/
          ${base_folder}'dataset_2d_4/dagger_linear' ${base_folder}'dataset_2d_5/dagger_linear' ${base_folder}'dataset_2d_6/dagger_linear'\
          ${base_folder}'dataset_2d_7/dagger_linear' ${base_folder}'dataset_2d_8/dagger_linear')
 
-run_idxs=(3)
+run_idxs=(2)
 
 
 printf "Changing directories"
@@ -32,7 +32,7 @@ alpha=0.001
 gamma=0.5
 batch_size=32
 epochs=2
-weight_decay=0.001
+weight_decay=0.0005
 seed_val=0
 
 

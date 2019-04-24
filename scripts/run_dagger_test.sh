@@ -43,7 +43,7 @@ model_files=('dagger_10_100_100_linear_length_oracle_0.0_0.001_32_1_0.001_0' 'da
 
 
 
-run_idxs=(3)
+run_idxs=(2)
 # 3 5 6 7 8 9)
 # 8 9)
 

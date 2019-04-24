@@ -39,6 +39,7 @@ class DaggerAgent(Agent):
 
   def train(self, num_iterations, num_eval_episodes, num_valid_episodes,
             heuristic = None, re_init=False, render=False, step=False, mixed_rollin=False):
+
     train_rewards = np.zeros(shape=(num_iterations, num_eval_episodes))
     train_accs = np.zeros(shape=(num_iterations, num_eval_episodes))
     train_loss = np.zeros(shape=num_iterations)
@@ -48,9 +49,11 @@ class DaggerAgent(Agent):
     weights_per_iter = {}
     features_per_iter = {}
     labels_per_iter = {}
-
     D = ExperienceBuffer() 
     policy_curr = deepcopy(self.policy)
+    weights_per_iter[-1] = policy_curr.model.serializable_parameter_dict()
+    policy_curr.model.print_parameters()
+
     best_valid_reward = -np.inf
     curr_median_reward = -np.inf
     for i in xrange(num_iterations):
@@ -86,7 +89,7 @@ class DaggerAgent(Agent):
             idx_l = np.random.choice(np.flatnonzero(scores==scores.max())) #random tie breaking
             idx_exp = self.expert(feas_actions, obs, j, self.G, self.train_env)
             #Aggregate the data
-            if np.random.sample() > self.gamma:
+            if np.random.sample() <= self.gamma:
               print('Adding to dataset')
               targets = torch.zeros(len(feas_actions),1)
               targets[idx_exp] = 1.0
