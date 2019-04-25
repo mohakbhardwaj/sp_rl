@@ -18,25 +18,17 @@ def main(args):
   #Parameters
   selector = args.heuristic
   ftr_params = None
-  agent = HeuristicAgent(env, selector, args.k)
-  test_rewards_dict, test_edge_ids_dict, avg_time = agent.test(args.num_episodes, render=args.render, step=args.step)
-  test_rewards = [it[1] for it in sorted(test_rewards_dict.items(), key=operator.itemgetter(0))]
-  print test_rewards
-  # print len(test_rewards)
-  # print test_rewards
-  # print test_avg_rewards
-  # print('Number of episodes = {}, Total Reward = {}, Average reward = {}, Average time = {}'.format(args.num_episodes, sum(test_rewards), np.mean(test_rewards), avg_time))
-
-  # fig, ax = plt.subplots(2,1)
-  # ax[0].plot(range(len(test_rewards)), test_rewards)
-  # ax[0].set_xlabel('Episodes')
-  # ax[0].set_ylabel('Episode Reward')
-
-
-  # ax[1].plot(range(len(test_avg_rewards)), test_avg_rewards)
-  # ax[1].set_xlabel('Episodes')
-  # ax[1].set_ylabel('Average Reward')
+  lite_ftrs = True
+  if selector in ["select_k_shortest", "select_priorkshortest", "select_lookahead"]:
+    ftr_params = dict(k=args.k)
   
+  agent = HeuristicAgent(env, selector, ftr_params, lite_ftrs)
+  test_rewards_dict, test_avg_rewards_dict, avg_time = agent.test(args.num_episodes, render=args.render, step=args.step)
+
+  test_rewards     = [it[1] for it in sorted(test_rewards_dict.items(), key=operator.itemgetter(0))]
+  test_avg_rewards = [it[1] for it in sorted(test_avg_rewards_dict.items(), key=operator.itemgetter(0))]
+  print test_rewards
+
   if not os.path.exists(args.folder):
     os.makedirs(args.folder)
 
@@ -45,13 +37,14 @@ def main(args):
     file_name = file_name + "_" + str(args.k)
   file_name = file_name + "_" + str(args.seed_val)
   results = dict()
-  results['test_rewards']  = test_rewards_dict
-  results['test_edge_ids'] = test_edge_ids_dict
+  results['test_rewards'] = test_rewards_dict
+  results['test_avg_rewards'] = test_avg_rewards_dict
   print('Average Time = {}, Results dumped'.format(avg_time))
   with open(file_name +".json", 'w') as f:
     json.dump(results, f)
+  # fig.savefig(file_name)
   
-
+  # plt.show(block=False)
 
 
 

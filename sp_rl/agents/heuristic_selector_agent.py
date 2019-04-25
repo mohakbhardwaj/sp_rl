@@ -10,7 +10,7 @@ import time
 import csv
 
 class HeuristicAgent(Agent):
-  def __init__(self, env, selector_str, ftr_params=None, lite_ftrs=False):
+  def __init__(self, env, selector_str, k=1):
     super(HeuristicAgent, self).__init__(env)
     self.SELECTORS = {'select_expand': None,
                       'select_forward': self.select_forward,
@@ -32,7 +32,7 @@ class HeuristicAgent(Agent):
     self.ftr_params = ftr_params
     if 'pos' in self.graph_info: node_pos = self.graph_info['pos']
     else: node_pos = None
-    self.G = GraphWrapper(self.graph_info)
+    self.G = GraphWrapper(self.graph_info, k)
 
 
   def train(self, num_episodes, render=False, step=False):
@@ -42,7 +42,8 @@ class HeuristicAgent(Agent):
   def test(self, num_episodes, render=True, step=False):
     start_t = time.time()
     test_rewards = {}
-    test_avg_rewards = {}
+    # test_avg_rewards = {}
+    test_edge_ids = {}
     for i in range(num_episodes):
       # sp_len_arr = []
       # edge_check_arr = []
@@ -60,7 +61,9 @@ class HeuristicAgent(Agent):
       k = 0
       run_base = False 
       ep_reward = 0
+      ep_edge_ids = []
       done = False
+
       while not done:
         path = self.get_path(self.G)
         feas_actions = self.filter_path(path, obs)
@@ -85,6 +88,7 @@ class HeuristicAgent(Agent):
          
         self.G.update_edge(act_id, obs[act_id]) #Update the edge weight according to the result
         ep_reward += reward
+        ep_edge_ids.append(act_id)
         j += 1
         if obs[act_id] == 0: k += 1
 
@@ -94,7 +98,8 @@ class HeuristicAgent(Agent):
         raw_input('Press Enter')
         
       test_rewards[self.env.world_num] = ep_reward
-      test_avg_rewards[self.env.world_num] = np.mean(test_rewards.values())
+      # test_avg_rewards[self.env.world_num] = np.mean(test_rewards.values())
+      test_edge_ids[self.env.world_num] = ep_edge_ids
       # plt.figure()
       # plt.plot(sp_len_arr, edge_check_arr,    label='Total edges checked')
       # plt.plot(sp_len_arr, invalid_check_arr, label='Invalid edges checked')
@@ -124,7 +129,7 @@ class HeuristicAgent(Agent):
     avg_time_taken = time.time() - start_t
     avg_time_taken = avg_time_taken/num_episodes*1.0
     
-    return test_rewards, test_avg_rewards, avg_time_taken
+    return test_rewards, test_edge_ids, avg_time_taken
 
 
   

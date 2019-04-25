@@ -9,7 +9,7 @@ from copy import deepcopy
 import networkx as nx
 
 class GraphWrapper(object):
-  def __init__(self, graph_info):
+  def __init__(self, graph_info, k=1):
     self.graph_info = graph_info
     self.adj_mat    = graph_info['adj_mat']
     self.pos        = graph_info['pos'] if 'pos' in graph_info else None
@@ -23,7 +23,7 @@ class GraphWrapper(object):
     estat       = self.G.new_edge_property("int")
     self.G.edge_properties['status'] = estat
     self.Gnx = nx.from_numpy_matrix(self.adj_mat)
-
+    self.k = k
     # if pos is not None:
     #   vert_pos = self.G.new_vertex_property("vector<double>")
     #   self.G.vp['pos'] = vert_pos
@@ -172,7 +172,7 @@ class GraphWrapper(object):
     return delta_progs.reshape(len(eids),1)
 
   def get_ksp_centrality(self, eids):
-    ksp_vec = self.ksp_centrality(500)
+    ksp_vec = self.ksp_centrality(self.k)
     ksp_centr = ksp_vec[eids]
     return ksp_centr
 
