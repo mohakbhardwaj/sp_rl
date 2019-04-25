@@ -77,6 +77,7 @@ class GraphEnv2D(gym.Env):
     Gdraw = nx.Graph()
     print ('Reading graph from file')
     act_num = 0
+    
     for i in xrange(2, len(graph_lines)):
       s = graph_lines[i].split()
       eid = int(s[0]) - 1 #edges ids in dataset start with 
@@ -94,7 +95,6 @@ class GraphEnv2D(gym.Env):
         action_to_gt_edge[act_num]     = e
         act_num += 1
     
-
     adj_mat = adjacency(G, edge_weights).todense()
     pos = {}
     for i in xrange(len(pos_lines)):
@@ -170,7 +170,7 @@ class GraphEnv2D(gym.Env):
     self.first_reset = False
     return self.obs,  graph_info
   
-  def render(self, mode='human', edge_widths={}, edge_colors={}, close=False):
+  def render(self, mode='human', edge_widths={}, edge_colors={}, close=False, dump_folder=None):
     edge_width_list = []
     edge_color_list = []
     for edge in self.Gdraw.edges():
@@ -197,6 +197,8 @@ class GraphEnv2D(gym.Env):
     nx.draw_networkx_edges(self.Gdraw, self.pos, ax=self.ax, edge_color=edge_color_list, width=edge_width_list, alpha=0.6)
     nx.draw_networkx_nodes(self.Gdraw, self.pos, ax=self.ax, nodelist=[self.source_node, self.target_node], node_color=['b', 'g'], node_size=20)
     self.fig.canvas.draw()
+    # if dump_folder is not None:
+
 
   def seed(self, seed=None):
     np.random.seed(seed)

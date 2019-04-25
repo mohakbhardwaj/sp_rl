@@ -29,7 +29,6 @@ class HeuristicAgent(Agent):
     self.selector_str = selector_str
     self.selector = self.SELECTORS[selector_str]
     _, self.graph_info = self.env.reset(roll_back=True)
-    self.ftr_params = ftr_params
     if 'pos' in self.graph_info: node_pos = self.graph_info['pos']
     else: node_pos = None
     self.G = GraphWrapper(self.graph_info, k)
@@ -136,6 +135,9 @@ class HeuristicAgent(Agent):
   def render_env(self, obs, path, act_id=-1):
     edge_widths={}
     edge_colors={}
+    posts = self.G.get_posterior(range(len(obs)), obs)
+    for i in range(len(obs)):
+      edge_widths[i] = posts[i]
     for i in path:
       edge_widths[i] = 5.0
       edge_colors[i] = str(0.4)
@@ -160,14 +162,12 @@ class HeuristicAgent(Agent):
     "Choose the edge most likely to be in collision"
     priors = G.get_priors(act_ids)
     idx_prior = np.argmax(priors)
-    # idx_prior = np.random.choice(np.flatnonzero(priors == priors.max()))
     return act_ids[idx_prior]
 
   def select_posterior(self, act_ids, obs, iter, G):
     "Choose the edge most likely to be in collision given all the observations so far"
     post = G.get_posterior(act_ids, obs)
     idx_post = np.argmax(post)
-    # idx_post = np.random.choice(np.flatnonzero(post == post.max()))
     return act_ids[idx_post]
 
   def select_delta_len(self, act_ids, obs,iter, G):

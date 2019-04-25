@@ -27,11 +27,11 @@ class GraphWrapper(object):
     # if pos is not None:
     #   vert_pos = self.G.new_vertex_property("vector<double>")
     #   self.G.vp['pos'] = vert_pos
-    #   for v in self.G.vertices():
+    #   for v in self.G.vertex_indexces():
     #     vert_pos[v] = pos[v]
 
     if self.train_edge_statuses is not None:
-      self.edge_prior_vec = np.mean(self.train_edge_statuses, axis=0)    
+      self.edge_prior_vec = 1.0 - np.mean(self.train_edge_statuses, axis=0)    
     
     self.curr_sp = self.shortest_path(self.source, self.target, 'weight', 'euc_dist')
     self.curr_sp_len = self.path_length(self.curr_sp)
@@ -155,7 +155,7 @@ class GraphWrapper(object):
     posterior = self.train_edge_statuses * probs.reshape(probs.shape[0],1)
     posterior = np.sum(posterior , axis=0)
     post = 1.0 - posterior[idxs]
-    return post.reshape(len(idxs),1)    
+    return post.reshape(len(idxs),1)   
   
   def get_delta_len_util(self, eids):
     delta_lens = np.zeros(len(eids))
