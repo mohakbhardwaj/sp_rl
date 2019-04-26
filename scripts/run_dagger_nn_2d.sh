@@ -12,7 +12,7 @@ folders=(${base_folder}'dataset_2d_1/dagger_nn' ${base_folder}'dataset_2d_2/dagg
          ${base_folder}'dataset_2d_4/dagger_nn' ${base_folder}'dataset_2d_5/dagger_nn' ${base_folder}'dataset_2d_6/dagger_nn'\
          ${base_folder}'dataset_2d_7/dagger_nn' ${base_folder}'dataset_2d_8/dagger_nn')
 
-run_idxs=(2)
+run_idxs=(5)
 
 
 printf "Changing directories"
