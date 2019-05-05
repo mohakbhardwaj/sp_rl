@@ -10,7 +10,7 @@ base_folder='../../sp_rl_new_experiments/'
 
 #Dagger linear
 folders=(${base_folder}'dataset_2d_1/dagger_linear' ${base_folder}'dataset_2d_2/dagger_linear' ${base_folder}'dataset_2d_3/dagger_linear'\
-         ${base_folder}'dataset_2d_4/dagger_linear' ${base_folder}'dataset_2d_5/dagger_linear' ${base_folder}'dataset_2d_6/dagger_linear'\
+         ${base_folder}'dataset_2d_4/dagger_linear_sparse' ${base_folder}'dataset_2d_5/dagger_linear' ${base_folder}'dataset_2d_6/dagger_linear'\
          ${base_folder}'dataset_2d_7/dagger_linear' ${base_folder}'dataset_2d_8/dagger_linear'\
          ${base_folder}'dataset_herb_4/dagger_linear' ${base_folder}'dataset_herb_5/dagger_linear')
 

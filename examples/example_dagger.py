@@ -42,7 +42,7 @@ def main(args):
 
   beta0        = args.beta0
   alpha        = args.alpha
-  gamma            = args.gamma
+  gamma        = args.gamma
   batch_size   = args.batch_size
   train_epochs = args.epochs 
   weight_decay = args.weight_decay #L2 penalty
