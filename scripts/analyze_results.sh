@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-base_path='../../sp_rl_new_experiments/dataset_2d_7/lsp_selectors_test/'
+base_path='../../sp_rl_new_experiments/dataset_2d_5/lsp_selectors_test/'
 files=(${base_path}'select_prior_200.json' ${base_path}'select_posterior_200.json')
 	  # ${base_path}'select_lookahead_len_200.json' ${base_path}'select_lookahead_prog_200.json'
 	  # ${base_path}'select_posterior_delta_len_200.json' ${base_path}'length_oracle_200.json')
@@ -15,4 +15,4 @@ dagger_file6='../../sp_rl_new_experiments/dataset_2d_6/dagger_nn/test_results.js
 
 
 echo ${dagger_file}
-python analyze_results.py --files ${dagger_file4}
+python analyze_results.py --files ${dagger_file5}
