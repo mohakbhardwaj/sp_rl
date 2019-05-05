@@ -9,13 +9,13 @@ valid_envs=('graphEnv2DTest-v1' 'graphEnv2DTest-v2' 'graphEnv2DTest-v3' 'graphEn
 base_folder='../../sp_rl_new_experiments/'
 
 #Dagger linear
-folders=(${base_folder}'dataset_2d_1/dagger_linear' ${base_folder}'dataset_2d_2/dagger_linear' ${base_folder}'dataset_2d_3/dagger_linear'\
+folders=(${base_folder}'dataset_2d_1/dagger_linear_mix' ${base_folder}'dataset_2d_2/dagger_linear' ${base_folder}'dataset_2d_3/dagger_linear'\
          ${base_folder}'dataset_2d_4/dagger_linear_sparse' ${base_folder}'dataset_2d_5/dagger_linear' ${base_folder}'dataset_2d_6/dagger_linear'\
          ${base_folder}'dataset_2d_7/dagger_linear' ${base_folder}'dataset_2d_8/dagger_linear'\
          ${base_folder}'dataset_herb_4/dagger_linear' ${base_folder}'dataset_herb_5/dagger_linear')
 
 
-model_file='dagger_10_100_100_linear_length_oracle_0.0_0.001_32_2_0.0001_0'
+model_file='dagger_10_100_100_linear_length_oracle_0.6_0.001_32_2_0.0001_0'
 
 #Dagger linear with heuristic roll-out
 # folders=(${base_folder}'dataset_2d_1/dagger_linear_hr' ${base_folder}'dataset_2d_2/dagger_linear_hr' ${base_folder}'dataset_2d_3/dagger_linear_hr'\
@@ -43,7 +43,7 @@ model_file='dagger_10_100_100_linear_length_oracle_0.0_0.001_32_2_0.0001_0'
 
 
 
-run_idxs=(1)
+run_idxs=(0)
 # 3 5 6 7 8 9)
 # 8 9)
 
