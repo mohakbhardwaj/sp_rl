@@ -9,10 +9,10 @@ python analyze_results.py --files ${files[@]}
 dagger_file1='../../sp_rl_new_experiments/dataset_2d_1/dagger_linear_mix/test_results.json'
 dagger_file2='../../sp_rl_new_experiments/dataset_2d_2/dagger_linear_mix/test_results.json'
 dagger_file3='../../sp_rl_new_experiments/dataset_2d_3/dagger_linear/test_results.json'
-dagger_file4='../../sp_rl_new_experiments/dataset_2d_4/dagger_linear_sparse/test_results.json'
+dagger_file4='../../sp_rl_new_experiments/dataset_2d_4/dagger_linear_quad/test_results.json'
 dagger_file5='../../sp_rl_new_experiments/dataset_2d_5/dagger_linear/test_results.json'
 dagger_file6='../../sp_rl_new_experiments/dataset_2d_6/dagger_nn/test_results.json'
 
 
 echo ${dagger_file}
-python analyze_results.py --files ${dagger_file2}
+python analyze_results.py --files ${dagger_file4}
