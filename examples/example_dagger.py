@@ -42,6 +42,7 @@ def main(args):
 
   beta0        = args.beta0
   alpha        = args.alpha
+  momentum     = args.momentum
   gamma        = args.gamma
   batch_size   = args.batch_size
   train_epochs = args.epochs 
@@ -57,7 +58,7 @@ def main(args):
     model = MLP(d_input=n_inputs, d_layers=[n_inputs, n_inputs/3], d_output=1, activation=torch.nn.ReLU)
     optim_method = 'adam'
   # print('Function approximation model = {}'.format(model))
-  policy = Policy(model, batch_size, train_method='supervised', optim_method=optim_method, lr=alpha, weight_decay=weight_decay, use_cuda=args.use_cuda)
+  policy = Policy(model, batch_size, train_method='supervised', optim_method=optim_method, lr=alpha, momentum = momentum, weight_decay=weight_decay, use_cuda=args.use_cuda)
   agent  = DaggerAgent(env, valid_env, policy, beta0, gamma, args.expert, G, train_epochs)
   
   if not args.test:
@@ -207,6 +208,7 @@ if __name__ == "__main__":
   parser.add_argument('--folder', required=True, type=str, help='Folder to load params.json and save results.json')
   parser.add_argument('--beta0', type=float, default=0.7, help='Value of mixing parameter after first episode of behavior cloning (decayed exponentially)')
   parser.add_argument('--alpha', type=float, default=0.01, help='Initial learning rate')
+  parser.add_argument('--momentum', type=float, default=0.0, help='Momentum value for SGD')
   parser.add_argument('--gamma'    , type=float, default=1.0, help='Probability of keeping a data point')
   parser.add_argument('--batch_size', type=int, default=32, help='Batch size for SGD')
   parser.add_argument('--epochs', type=int, default=2, help='Number of epochs for SGD')
