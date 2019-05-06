@@ -38,7 +38,7 @@ class DaggerAgent(Agent):
 
 
   def train(self, num_iterations, num_eval_episodes, num_valid_episodes,
-            heuristic = None, re_init=False, render=False, step=False, mixed_rollin=False):
+            heuristic = None, re_init=False, render=False, step=False, mixed_rollin=False, quad_ftrs=False):
 
     train_rewards = np.zeros(shape=(num_iterations, num_eval_episodes))
     train_accs = np.zeros(shape=(num_iterations, num_eval_episodes))
@@ -74,7 +74,7 @@ class DaggerAgent(Agent):
           self.G.reset()
           if render:
             path   = self.get_path(self.G)
-            ftrs   = torch.tensor(self.G.get_features(feas_actions, obs, j))
+            ftrs   = torch.tensor(self.G.get_features(feas_actions, obs, j, quad_ftrs))
             scores = policy_curr.predict(ftrs).detach().numpy()
             self.render_env(self.train_env, path, scores)
 
@@ -82,9 +82,9 @@ class DaggerAgent(Agent):
           while not done:
             path = self.get_path(self.G)
             feas_actions = self.filter_path(path, obs) #Only select from unevaluated edges in shortest path
-            ftrs  = torch.tensor(self.G.get_features(feas_actions, obs, j))
+            ftrs  = torch.tensor(self.G.get_features(feas_actions, obs, j, quad_ftrs))
             scores = policy_curr.predict(ftrs)  
-            ftrsl = self.G.get_features(feas_actions, obs, j).tolist()
+            ftrsl = self.G.get_features(feas_actions, obs, j, quad_ftrs).tolist()
             scores = scores.detach().numpy()
             idx_l = np.random.choice(np.flatnonzero(scores==scores.max())) #random tie breaking
             idx_exp = self.expert(feas_actions, obs, j, self.G, self.train_env)
@@ -143,7 +143,7 @@ class DaggerAgent(Agent):
         median_reward = 0
       else:
         print('Running validation')
-        valid_rewards_dict, valid_acc_dict = self.test(self.valid_env, policy_curr, num_valid_episodes)
+        valid_rewards_dict, valid_acc_dict = self.test(self.valid_env, policy_curr, num_valid_episodes, quad_ftrs=quad_ftrs)
         valid_rewards = [it[1] for it in sorted(valid_rewards_dict.items(), key=operator.itemgetter(0))]
         valid_accs    = [it[1] for it in sorted(valid_acc_dict.items(), key=operator.itemgetter(0))]        
         median_reward = np.median(valid_rewards)
@@ -159,7 +159,7 @@ class DaggerAgent(Agent):
     return train_rewards, train_loss, train_accs, validation_reward, validation_accuracy, dataset_size, weights_per_iter, features_per_iter, labels_per_iter
 
 
-  def test(self, env, policy, num_episodes, render=False, step=False):
+  def test(self, env, policy, num_episodes, render=False, step=False, quad_ftrs=False):
     test_rewards = {}
     test_acc = {}
     _, _ = env.reset(roll_back=True)
@@ -175,7 +175,7 @@ class DaggerAgent(Agent):
         if render:
           path = self.get_path(self.G)
           feas_actions = self.filter_path(path, obs)
-          ftrs = torch.tensor(self.G.get_features(feas_actions, obs, j))
+          ftrs = torch.tensor(self.G.get_features(feas_actions, obs, j, quad_ftrs))
           scores = policy.predict(ftrs)
           scores = scores.detach().numpy()
           self.render_env(env, path, scores)
@@ -184,7 +184,7 @@ class DaggerAgent(Agent):
         while not done:
           path = self.get_path(self.G)
           feas_actions = self.filter_path(path, obs)
-          ftrs = torch.tensor(self.G.get_features(feas_actions, obs, j))
+          ftrs = torch.tensor(self.G.get_features(feas_actions, obs, j, quad_ftrs))
           scores = policy.predict(ftrs)
           scores = scores.detach().numpy()
           if render:
@@ -204,7 +204,7 @@ class DaggerAgent(Agent):
         # print('Final path = {}'.format([env.edge_from_action(a) for a in path]))
         if render:
           # feas_actions = self.filter_path(path, obs)
-          fr = torch.tensor(self.G.get_features(path, obs, j))
+          fr = torch.tensor(self.G.get_features(path, obs, j, quad_ftrs))
           sc = policy.predict(fr)
           self.render_env(env, path, sc.detach().numpy())
           raw_input('Press Enter')

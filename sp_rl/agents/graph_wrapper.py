@@ -101,12 +101,13 @@ class GraphWrapper(object):
 
 
 
-  def get_features(self, eids, obs, itr):
+  def get_features(self, eids, obs, itr, quad=False):
     """Calculate features for a given set of edges
     Params:
       eids(array of ints)
       obs (array of ints)
       itr(int)
+      quad(bool)
     Returns:
       features (array of floats)
     """
@@ -117,11 +118,18 @@ class GraphWrapper(object):
     delta_progs    = self.get_delta_prog_util(eids)
     # print priors.shape, posteriors.shape, forward_scores.shape, delta_lens.shape, delta_progs.shape
     features = np.concatenate((forward_scores, priors, posteriors, delta_lens, delta_progs), axis=1)
-    # print features.shape
+    print forward_scores
+    # if quad:
+    #   q = np.einsum('ij,ik->ijk', features, features)
+    #   print q[0][np.triu_indices(q.shape[1], k=1)]
+    #   q = q[:,np.triu_indices(q.shape[1], k=1)].reshape(features.shape[0],-1)
+      
+    #   features = np.concatenate((features, q), axis=1)
     return features
   
   def get_forward_scores(self, eids):
-    forward_scores = 1.0 - np.arange(len(eids))/len(eids)
+    forward_scores = 1.0 - np.arange(len(eids))*1.0/(len(eids)-1.0)
+    print np.arange(len(eids))/len(eids)*1.0, np.arange(len(eids))
     return forward_scores.reshape(len(eids),1)
 
 

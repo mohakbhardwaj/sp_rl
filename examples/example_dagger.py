@@ -63,7 +63,7 @@ def main(args):
     train_rewards, train_loss, train_accs, validation_reward, \
     validation_accuracy, dataset_size, weights_per_iter, \
     features_per_iter, labels_per_iter = agent.train(args.num_iters, args.num_episodes_per_iter, args.num_valid_episodes,\
-                                                     heuristic=args.heuristic, re_init=args.re_init, mixed_rollin=args.mixed_rollin)
+                                                     heuristic=args.heuristic, re_init=args.re_init, mixed_rollin=args.mixed_rollin, quad_ftrs=args.quad_ftrs)
     num_train_episodes = args.num_iters * args.num_episodes_per_iter
     # print('(Training) Number of episodes = {}, Total Reward = {}, Average reward = {}, \
     #         Best validation reward = {}, Train time = {}'.format(num_train_episodes, \
@@ -146,7 +146,7 @@ def main(args):
       plt.show(block=False)
 
     _,_ = valid_env.reset(roll_back=True)
-    test_rewards_dict, test_acc_dict = agent.test(valid_env, agent.policy, args.num_test_episodes, render=args.render, step=args.step)
+    test_rewards_dict, test_acc_dict = agent.test(valid_env, agent.policy, args.num_test_episodes, render=args.render, step=args.step, quad_ftrs=args.quad_ftrs)
 
   else:
     if not args.model_file:
@@ -157,7 +157,7 @@ def main(args):
     test_env.seed(args.seed_val)
     _, _ = test_env.reset()
     # raw_input('Weights loaded. Press enter to start testing...')
-    test_rewards_dict, test_acc_dict = agent.test(test_env, policy, args.num_test_episodes, render=args.render, step=args.step)
+    test_rewards_dict, test_acc_dict = agent.test(test_env, policy, args.num_test_episodes, render=args.render, step=args.step, quad_ftrs=args.quad_ftrs)
   
 
 
@@ -219,6 +219,7 @@ if __name__ == "__main__":
   parser.add_argument("--plot", action='store_true', help='Whether to plot results or not')
   parser.add_argument("--heuristic", type=str, help="Heuristic policy to roll-in with. If not provided, expert will be used foll roll-in")
   parser.add_argument("--mixed_rollin", action='store_true', help="Roll-in with heuristic and oracle")
+  parser.add_argument("--quad_ftrs", action='store_true', help="Use quadratic features or not")
   args = parser.parse_args()
   main(args)
 
