@@ -130,7 +130,7 @@ class GraphWrapper(object):
     if len(eids) > 1:
       forward_scores = 1.0 - np.arange(len(eids))*1.0/(len(eids)-1.0)
     else:
-      forward_scores = [1.0]
+      forward_scores = np.array([1.0])
     return forward_scores.reshape(len(eids),1)
 
 
