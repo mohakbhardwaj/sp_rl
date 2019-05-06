@@ -127,7 +127,10 @@ class GraphWrapper(object):
     return features
   
   def get_forward_scores(self, eids):
-    forward_scores = 1.0 - np.arange(len(eids))*1.0/(len(eids)-1.0)
+    if len(eids) > 1:
+      forward_scores = 1.0 - np.arange(len(eids))*1.0/(len(eids)-1.0)
+    else:
+      forward_scores = [1.0]
     return forward_scores.reshape(len(eids),1)
 
 
