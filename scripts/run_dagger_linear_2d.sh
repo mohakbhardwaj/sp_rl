@@ -11,7 +11,7 @@ folders=(${base_folder}'dataset_2d_1/dagger_linear_mix' ${base_folder}'dataset_2
          ${base_folder}'dataset_2d_4/dagger_linear_mix' ${base_folder}'dataset_2d_5/dagger_linear_mix' ${base_folder}'dataset_2d_6/dagger_linear_mix'\
          ${base_folder}'dataset_2d_7/dagger_linear_mix' ${base_folder}'dataset_2d_8/dagger_linear_mix')
 
-run_idxs=(1 2 3 4 5 6 7)
+run_idxs=(3)
 
 
 printf "Changing directories"
@@ -27,7 +27,7 @@ num_test_episodes=200
 
 model='linear'
 expert='length_oracle'
-beta0=0.5
+beta0=0.3
 alpha=0.001
 gamma=0.5
 batch_size=64
@@ -42,5 +42,5 @@ for ((i=0;i<${#run_idxs[@]};++i)); do
   python2.7 example_dagger.py --env ${train_envs[idx]} --valid_env ${valid_envs[idx]} --folder ${folders[idx]} --num_iters ${num_iters}\
          --num_episodes_per_iter ${episodes_per_iter} --num_valid_episodes ${num_valid_episodes} --num_test_episodes ${num_test_episodes}\
          --model ${model} --expert ${expert} --beta0 ${beta0} --alpha ${alpha} --gamma ${gamma} --batch_size ${batch_size} --epochs ${epochs}\
-         --weight_decay ${weight_decay} --seed_val ${seed_val} #--quad_ftrs  #--plot
+         --weight_decay ${weight_decay} --seed_val ${seed_val} --plot  --quad_ftrs
 done

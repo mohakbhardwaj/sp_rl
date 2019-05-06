@@ -114,16 +114,13 @@ class GraphWrapper(object):
     priors         = self.get_priors(eids)
     posteriors     = self.get_posterior(eids, obs)
     forward_scores = self.get_forward_scores(eids)
-    delta_lens     = self.get_delta_len_util(eids)
-    delta_progs    = self.get_delta_prog_util(eids)
-    # print priors.shape, posteriors.shape, forward_scores.shape, delta_lens.shape, delta_progs.shape
-    features = np.concatenate((forward_scores, priors, posteriors, delta_lens, delta_progs), axis=1)
-    # if quad:
-    #   q = np.einsum('ij,ik->ijk', features, features)
-    #   print q[0][np.triu_indices(q.shape[1], k=1)]
-    #   q = q[:,np.triu_indices(q.shape[1], k=1)].reshape(features.shape[0],-1)
-      
-    #   features = np.concatenate((features, q), axis=1)
+    delta_lens, delta_progs = self.get_delta_centrality(eids, obs, prog=True)
+    # delta_progs    = self.get_delta_prog_util(eids, obs)
+    features       = np.concatenate((forward_scores, priors, posteriors, delta_lens, delta_progs), axis=1)
+    if quad:
+      q = np.einsum('ij,ik->ijk', features, features) + 1e-8
+      quad_ftrs = q[np.triu(q, k=1)>0].reshape(features.shape[0],-1) - 1e-8
+      features = np.concatenate((features, quad_ftrs), axis=1)
     return features
   
   def get_forward_scores(self, eids):
@@ -166,19 +163,21 @@ class GraphWrapper(object):
     post = 1.0 - posterior[idxs]
     return post.reshape(len(idxs),1)   
   
-  def get_delta_len_util(self, eids):
+  def get_delta_centrality(self, eids, obs, prog=False):
     delta_lens = np.zeros(len(eids))
-    for i, eid in enumerate(eids):
-      dl = self.edge_delta_len(eid)
-      delta_lens[i] = dl
-    return delta_lens.reshape(len(eids),1)
-
-  def get_delta_prog_util(self, eids):
     delta_progs = np.zeros(len(eids))
     for i, eid in enumerate(eids):
-      dp = self.edge_delta_prog(eid)
+      dl,dp = self.edge_delta_centrality(eid, obs, prog)
+      delta_lens[i] = dl
       delta_progs[i] = dp
-    return delta_progs.reshape(len(eids),1)
+    return delta_lens.reshape(len(eids),1), delta_progs.reshape(len(eids),1)
+
+  # def get_delta_prog_util(self, eids, obs):
+  #   delta_progs = np.zeros(len(eids))
+  #   for i, eid in enumerate(eids):
+  #     dp = self.edge_delta_prog(eid, obs)
+  #     delta_progs[i] = dp
+  #   return delta_progs.reshape(len(eids),1)
 
   def get_ksp_centrality(self, eids):
     ksp_vec = self.ksp_centrality(self.k)
@@ -186,33 +185,46 @@ class GraphWrapper(object):
     return ksp_centr
 
 
-  def edge_delta_len(self, eid):
+  def edge_delta_centrality(self, eid, obs, prog=False):
     curr_sp = self.curr_sp
     curr_sp_len = self.curr_sp_len
     self.update_edge(eid, 0, -1)
     new_sp = self.curr_sp
     delta_len = 0.0
+    delta_prog = 0.0
     if len(new_sp) > 0:
       new_sp_len = self.curr_sp_len
       delta_len = new_sp_len - curr_sp_len
+      if prog:
+        for i in xrange(len(new_sp)-1):
+          qid = self.edge_to_action[(new_sp[i],new_sp[i+1])]
+          if obs[qid] == -1:
+            delta_prog += 1.0
+        delta_prog = delta_prog/(len(new_sp)-1.0)  
+    
     self.update_edge(eid, -1, 0)
-    return delta_len
+    return delta_len, delta_prog
 
-  def edge_delta_prog(self, eid):
-    curr_sp = self.curr_sp
-    curr_sp_len = self.curr_sp_len
-    self.update_edge(eid, 0, -1)
-    new_sp = self.curr_sp
-    delta_progress = 0.0
-    if len(new_sp) > 0:
-      new_sp_len = self.curr_sp_len
-      for i in xrange(len(new_sp)-1):
-        gt_edge = self.G.edge(new_sp[i], new_sp[i+1])
-        if self.G.edge_properties['status'][gt_edge] == -1:
-          delta_progress += 1.0
-      delta_progress = delta_progress/(len(new_sp)-1)
-    self.update_edge(eid, -1, 0)
-    return delta_progress
+  # def edge_delta_prog(self, eid, obs):
+  #   curr_sp = self.curr_sp
+  #   curr_sp_len = self.curr_sp_len
+  #   self.update_edge(eid, 0, -1)
+  #   new_sp = self.curr_sp
+  #   delta_progress = 0.0
+  #   if len(new_sp) > 0:
+  #     new_sp_len = self.curr_sp_len
+  #     for i in xrange(len(new_sp)-1):
+  #       # gt_edge = self.G.edge(new_sp[i], new_sp[i+1])
+  #       # if self.G.edge_properties['status'][gt_edge] == -1:
+  #       edge = (new_sp[i], new_sp[i+1])
+  #       if obs[self.edge_to_action[edge]] == -1:
+  #         print "Here"
+  #         delta_progress += 1.0
+  #     delta_progress = delta_progress/(len(new_sp)-1.0)
+  #   self.update_edge(eid, -1, 0)
+  #   print delta_progress
+  #   raw_input('...')
+  #   return delta_progress
 
   def to_graph_tool(self, adj):
     g = Graph(directed=False)

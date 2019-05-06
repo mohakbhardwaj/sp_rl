@@ -82,10 +82,11 @@ class DaggerAgent(Agent):
           while not done:
             path = self.get_path(self.G)
             feas_actions = self.filter_path(path, obs) #Only select from unevaluated edges in shortest path
-            ftrs  = torch.tensor(self.G.get_features(feas_actions, obs, j, quad_ftrs))
-            scores = policy_curr.predict(ftrs)  
-            ftrsl = self.G.get_features(feas_actions, obs, j, quad_ftrs).tolist()
-            scores = scores.detach().numpy()
+            # print obs 
+            ftrsnp = self.G.get_features(feas_actions, obs, j, quad_ftrs)
+            ftrs   = torch.tensor(ftrsnp)
+            scores = policy_curr.predict(ftrs).detach().numpy() 
+            # scores = scores.detach().numpy()
             idx_l = np.random.choice(np.flatnonzero(scores==scores.max())) #random tie breaking
             idx_exp = self.expert(feas_actions, obs, j, self.G, self.train_env)
             #Aggregate the data
@@ -94,13 +95,11 @@ class DaggerAgent(Agent):
               targets = torch.zeros(len(feas_actions),1)
               targets[idx_exp] = 1.0
               D.push(ftrs, targets)            
-
+              ftrsl  = ftrsnp.tolist()
               for id in xrange(len(feas_actions)):
                 Xdata.append(ftrsl[id])
-                if id == idx_exp:
-                  Ydata.append(1)
-                else:
-                  Ydata.append(0)
+                if id == idx_exp: Ydata.append(1)
+                else: Ydata.append(0)
 
             #Execute mixture
             if np.random.sample() > beta: idx = idx_l 
@@ -111,6 +110,7 @@ class DaggerAgent(Agent):
                 if mixed_rollin: idx = np.random.choice([idx_exp, idx_heuristic])
                 else: idx = idx_heuristic
                 if idx == idx_heuristic: print('Heuristic action') 
+            
             act_id = feas_actions[idx]
             print('Current iteration = {}, Iter episode = {}, Timestep = {}, Selected edge ={}, Expert edge = {},  beta = {}, Curr median reward = {}'.format(i+1, k+1, j, act_id, feas_actions[idx_exp], beta, curr_median_reward))
             obs, reward, done, info = self.train_env.step(act_id)
@@ -185,8 +185,7 @@ class DaggerAgent(Agent):
           path = self.get_path(self.G)
           feas_actions = self.filter_path(path, obs)
           ftrs = torch.tensor(self.G.get_features(feas_actions, obs, j, quad_ftrs))
-          scores = policy.predict(ftrs)
-          scores = scores.detach().numpy()
+          scores = policy.predict(ftrs).detach().numpy()
           if render:
             self.render_env(env, feas_actions, scores)
           #select greedy action
@@ -203,7 +202,6 @@ class DaggerAgent(Agent):
           j += 1
         # print('Final path = {}'.format([env.edge_from_action(a) for a in path]))
         if render:
-          # feas_actions = self.filter_path(path, obs)
           fr = torch.tensor(self.G.get_features(path, obs, j, quad_ftrs))
           sc = policy.predict(fr)
           self.render_env(env, path, sc.detach().numpy())

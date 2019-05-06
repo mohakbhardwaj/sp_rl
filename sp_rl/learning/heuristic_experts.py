@@ -67,7 +67,7 @@ def length_oracle(act_ids, obs, iter, G, env):
   scores = np.zeros(len(act_ids))
   for i, act_id in enumerate(act_ids):
     if env.curr_edge_stats[act_id] == 0:
-      scores[i] = G.get_delta_len_util([act_id])
+      scores[i],_ = G.get_delta_centrality([act_id], None, False)
   return np.argmax(scores)
 
 def length_oracle_2(act_ids, obs, iter, G, horizon=2):

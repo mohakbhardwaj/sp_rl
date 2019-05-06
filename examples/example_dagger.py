@@ -48,11 +48,13 @@ def main(args):
   weight_decay = args.weight_decay #L2 penalty
   
   G = GraphWrapper(graph_info)
+  if args.quad_ftrs: n_inputs = 15
+  else: n_inputs = 5
   if args.model == 'linear': 
-    model = LinearNet(5, 1)
+    model = LinearNet(n_inputs, 1)
     optim_method = 'sgd'
   elif args.model == 'mlp': 
-    model = MLP(d_input=5, d_layers=[10, 5], d_output=1, activation=torch.nn.ReLU)
+    model = MLP(d_input=n_inputs, d_layers=[n_inputs, n_inputs/3], d_output=1, activation=torch.nn.ReLU)
     optim_method = 'adam'
   # print('Function approximation model = {}'.format(model))
   policy = Policy(model, batch_size, train_method='supervised', optim_method=optim_method, lr=alpha, weight_decay=weight_decay, use_cuda=args.use_cuda)
