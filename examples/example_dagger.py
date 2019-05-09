@@ -136,7 +136,8 @@ def main(args):
         lquants = np.quantile(validation_reward, 0.4, axis=1).reshape(1, args.num_iters)
         uquants = np.quantile(validation_reward, 0.6, axis=1).reshape(1, args.num_iters)
         yerr=np.concatenate((lquants, uquants), axis=0)
-        ax1[2][0].errorbar(range(args.num_iters), np.median(validation_reward,axis=1), yerr=yerr)
+        #ax1[2][0].errorbar(range(args.num_iters), np.median(validation_reward,axis=1), yerr=yerr)
+        ax1[2][0].plot(range(args.num_iters), np.median(validation_reward,axis=1))
         ax1[2][0].set_xlabel('Iterations')
         ax1[2][0].set_ylabel('Validation reward')
 
@@ -147,7 +148,7 @@ def main(args):
       fig1.suptitle('Train results', fontsize=16)
       fig1.savefig(args.folder + '/train_results.pdf', bbox_inches='tight')
       plt.show(block=False)
-
+    print('Running final testing')
     _,_ = valid_env.reset(roll_back=True)
     test_rewards_dict, test_acc_dict = agent.test(valid_env, agent.policy, args.num_test_episodes, render=args.render, step=args.step, quad_ftrs=args.quad_ftrs)
 
