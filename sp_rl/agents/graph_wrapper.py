@@ -115,7 +115,11 @@ class GraphWrapper(object):
     posteriors     = self.get_posterior(eids, obs)
     forward_scores = self.get_forward_scores(eids)
     delta_lens, delta_progs = self.get_delta_centrality(eids, obs, prog=True)
-    # delta_progs    = self.get_delta_prog_util(eids, obs)
+    
+    num = delta_lens - np.min(delta_lens)
+    den = np.max(delta_lens)-np.min(delta_lens)
+    if den > 0: delta_lens = num/den
+    else: delta_lens = np.zeros(delta_lens.shape)
     features       = np.concatenate((forward_scores, priors, posteriors, delta_lens, delta_progs), axis=1)
     if quad:
       q = np.einsum('ij,ik->ijk', features, features) + 1e-8
