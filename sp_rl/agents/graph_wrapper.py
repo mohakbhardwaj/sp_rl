@@ -120,13 +120,13 @@ class GraphWrapper(object):
     den = np.max(delta_lens)-np.min(delta_lens)
     # if den > 0: delta_lens = num/den
     # else: delta_lens = np.zeros(delta_lens.shape)
-    features       = np.concatenate((forward_scores, priors, posteriors, delta_lens, delta_progs), axis=1)
+    features = np.concatenate((forward_scores, priors, posteriors, delta_lens, delta_progs), axis=1)
     if quad:
       # q = np.einsum('ij,ik->ijk', features, features) + 1e-8
       # quad_ftrs = q[np.triu(q, k=1)>0].reshape(features.shape[0],-1) - 1e-8
       pdl = posteriors * delta_lens
       features = np.concatenate((features, pdl), axis=1)
-    print features
+    # print features
     return features
   
   def get_forward_scores(self, eids):

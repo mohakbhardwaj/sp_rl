@@ -49,7 +49,7 @@ def main(args):
   weight_decay = args.weight_decay #L2 penalty
   
   G = GraphWrapper(graph_info)
-  if args.quad_ftrs: n_inputs = 15
+  if args.quad_ftrs: n_inputs = 6 #15
   else: n_inputs = 5
   if args.model == 'linear': 
     model = LinearNet(n_inputs, 1)
