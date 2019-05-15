@@ -225,7 +225,7 @@ class HeuristicAgent(Agent):
     for i, act_id in enumerate(act_ids):
       if self.env.curr_edge_stats[act_id] == 0:
         delta_len, _ = G.get_delta_centrality([act_id], obs, prog=False)
-        scores[i] = delta_len0 
+        scores[i] = delta_len
 
     return act_ids[np.argmax(scores)]
 
