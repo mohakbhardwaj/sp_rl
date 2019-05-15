@@ -8,20 +8,48 @@ from agent import Agent
 from sp_rl.learning import LinearPolicy
 
 class CEMAgent(Agent):
-  def __init__(self, env, eps0, epsf, gamma, alpha, k, w_init, b_init, G):
-    super(CEMAgent, self).__init__(env)
-    self.eps0 = eps0
-    self.epsf = epsf
+  def __init__(self, train_env, valid_env, policy, beta0, gamma, expert_str, G, epochs):
+    super(CEMAgent, self).__init__(train_env)
+    self.EXPERTS = {'select_expand': None,
+                    'select_forward':   select_forward,
+                    'select_backward':  select_backward,
+                    'select_alternate': select_alternate,
+                    'select_prior':     select_prior,
+                    'select_posterior': select_posterior,
+                    'select_ksp_centrality': select_ksp_centrality,
+                    'select_posteriorksp':   select_posteriorksp,
+                    'select_delta_len':  select_delta_len,
+                    'select_delta_prog': select_delta_prog,
+                    'select_posterior_delta_len': select_posterior_delta_len,
+                    'length_oracle': length_oracle,
+                    'length_oracle_2': length_oracle_2}
+    
+    self.train_env = train_env
+    self.valid_env = valid_env
+    self.expert = self.EXPERTS[expert_str]
+    self.beta0 = beta0
     self.gamma = gamma
-    self.alpha = alpha
-    self.k = k
-    # _, self.graph_info = self.env.reset()
     self.G = G
-    # self.num_weights = self.G.num_features
-    # w_init = np.random.rand(self.num_weights, 1)
-    # self.w_init = w_init#np.ones(shape=(self.num_weights, 1))
-    # b_init = 1
-    self.q_fun = LinearQFunction(w_init, b_init, alpha)
+    self.train_epochs = epochs
+    self.policy = policy
+
+
+
+
+  # def __init__(self, env, eps0, epsf, gamma, alpha, k, w_init, b_init, G):
+    # super(CEMAgent, self).__init__(env)
+    # self.eps0 = eps0
+    # self.epsf = epsf
+    # self.gamma = gamma
+    # self.alpha = alpha
+    # self.k = k
+    # # _, self.graph_info = self.env.reset()
+    # self.G = G
+    # # self.num_weights = self.G.num_features
+    # # w_init = np.random.rand(self.num_weights, 1)
+    # # self.w_init = w_init#np.ones(shape=(self.num_weights, 1))
+    # # b_init = 1
+    # self.q_fun = LinearQFunction(w_init, b_init, alpha)
 
 
   def train(self, num_episodes, num_exp_episodes, render=False, step=True):

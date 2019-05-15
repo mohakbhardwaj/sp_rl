@@ -182,14 +182,13 @@ class HeuristicAgent(Agent):
 
   def select_posterior_delta_len(self, act_ids, obs, iter, G):
     p = G.get_posterior(act_ids, obs)
-    dl = G.get_delta_len_util(act_ids)
+    dl, _ = G.get_delta_centrality(act_ids, obs, prog=False)
     pdl = p * dl
     idx_pdl = np.argmax(pdl)
     return act_ids[idx_pdl] 
 
   def select_ksp_centrality(self, act_ids, obs, iter, G):
     ksp_centr = G.get_ksp_centrality(act_ids)
-    # print ksp_centr
     return act_ids[np.argmax(ksp_centr)]
 
 

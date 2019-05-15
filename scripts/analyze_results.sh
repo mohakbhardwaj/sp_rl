@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-base_path='../../sp_rl_new_experiments/dataset_herb_5/lsp_selectors_test/'
-files=(${base_path}'select_prior_200.json' ${base_path}'select_posterior_200.json'
-       ${base_path}'select_forward_200.json' ${base_path}'select_backward_200.json')
+base_path='../../sp_rl_new_experiments/dataset_herb_5/lsp_selectors_valid/'
+files=(${base_path}'select_forward_200.json' ${base_path}'select_backward_200.json'
+       ${base_path}'select_alternate_200.json' ${base_path}'select_prior_200.json'
+       ${base_path}'select_posterior_200.json' ${base_path}'select_delta_len_200.json' 
+       ${base_path}'select_delta_prog_200.json' ${base_path}'length_oracle_200.json')
 echo ${files[@]}
 python analyze_results.py --files ${files[@]} 
 
