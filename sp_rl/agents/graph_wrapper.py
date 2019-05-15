@@ -101,7 +101,7 @@ class GraphWrapper(object):
 
 
 
-  def get_features(self, eids, obs, itr, quad=False):
+  def get_features(self, eids, obs, itr, quad=False, T=1.0):
     """Calculate features for a given set of edges
     Params:
       eids(array of ints)
@@ -112,19 +112,20 @@ class GraphWrapper(object):
       features (array of floats)
     """
     priors         = self.get_priors(eids)
-    posteriors     = self.get_posterior(eids, obs)
+    posteriors     = self.get_posterior(eids, obs, T)
     forward_scores = self.get_forward_scores(eids)
     delta_lens, delta_progs = self.get_delta_centrality(eids, obs, prog=True)
     
     num = delta_lens - np.min(delta_lens)
     den = np.max(delta_lens)-np.min(delta_lens)
-    if den > 0: delta_lens = num/den
-    else: delta_lens = np.zeros(delta_lens.shape)
+    # if den > 0: delta_lens = num/den
+    # else: delta_lens = np.zeros(delta_lens.shape)
     features       = np.concatenate((forward_scores, priors, posteriors, delta_lens, delta_progs), axis=1)
     if quad:
       q = np.einsum('ij,ik->ijk', features, features) + 1e-8
       quad_ftrs = q[np.triu(q, k=1)>0].reshape(features.shape[0],-1) - 1e-8
       features = np.concatenate((features, quad_ftrs), axis=1)
+    print features
     return features
   
   def get_forward_scores(self, eids):
@@ -151,6 +152,7 @@ class GraphWrapper(object):
        T: Temperature of the distribution.
     """
     obs_idxs = np.where(obs >= 0)[0] #get idxs of edges that have been checked
+    # print obs_idxs
     obs_checked = obs[obs_idxs]
     train_edges_checked = self.train_edge_statuses[:, obs_idxs]
     #Calculate deviation between training dataset and current observation  

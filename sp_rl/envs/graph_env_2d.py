@@ -77,7 +77,6 @@ class GraphEnv2D(gym.Env):
     Gdraw = nx.Graph()
     print ('Reading graph from file')
     act_num = 0
-    
     for i in xrange(2, len(graph_lines)):
       s = graph_lines[i].split()
       eid = int(s[0]) - 1 #edges ids in dataset start with 
