@@ -4,12 +4,12 @@ envs=('graphEnv2DValidation-v1' 'graphEnv2DValidation-v2' 'graphEnv2DValidation-
 
 
 base_folder='../../sp_rl_new_experiments/'
-folders=(${base_folder}'dataset_2d_1/lsp_selectors_test' ${base_folder}'dataset_2d_2/lsp_selectors_test' ${base_folder}'dataset_2d_3/lsp_selectors_test'\
-         ${base_folder}'dataset_2d_4/lsp_selectors_test' ${base_folder}'dataset_2d_5/lsp_selectors_test' ${base_folder}'dataset_2d_6/lsp_selectors_test'\
-         ${base_folder}'dataset_2d_7/lsp_selectors_test' ${base_folder}'dataset_2d_8/lsp_selectors_test')
-selectors=('select_prior' 'select_posterior')
+folders=(${base_folder}'dataset_2d_1/lsp_selectors_valid' ${base_folder}'dataset_2d_2/lsp_selectors_valid' ${base_folder}'dataset_2d_3/lsp_selectors_valid'\
+         ${base_folder}'dataset_2d_4/lsp_selectors_valid' ${base_folder}'dataset_2d_5/lsp_selectors_valid' ${base_folder}'dataset_2d_6/lsp_selectors_valid'\
+         ${base_folder}'dataset_2d_7/lsp_selectors_valid' ${base_folder}'dataset_2d_8/lsp_selectors_valid')
+selectors=('select_forward' 'select_backward' 'select_prior' 'select_posterior' 'select_delta_len' 'select_delta_prog' 'length_oracle' 'select_alternate', 'select_posterior_delta_len')
 
-run_idxs=(3)
+run_idxs=(0 1 2 3 4 5 6)
 
 num_episodes=200
 seed_val=0
