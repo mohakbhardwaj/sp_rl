@@ -13,10 +13,10 @@ from ndgrid import NDGrid
 
 class GraphEnvHerb(gym.Env):
   metadata = {'render.modes': ['human'],
-              'max_train_envs': 500,
+              'max_train_envs': 600,
               'num_train_envs': 200,
               'num_validation_envs': 200,
-              'num_test_envs': 300}
+              'num_test_envs': 200}
 
   COLOR = {1 : 'g', #Known Free
            0 : 'r', #Known Invalid

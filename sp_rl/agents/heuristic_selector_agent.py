@@ -171,12 +171,12 @@ class HeuristicAgent(Agent):
     return act_ids[idx_post]
 
   def select_delta_len(self, act_ids, obs,iter, G):
-    delta_lens = G.get_delta_len_util(act_ids)
+    delta_lens, _ = G.get_delta_centrality(act_ids, obs, prog=False)  
     idx_lens = np.argmax(delta_lens)
     return act_ids[idx_lens]
 
   def select_delta_prog(self, act_ids, obs, iter, G):
-    delta_progs = G.get_delta_prog_util(act_ids)
+    _, delta_progs = G.get_delta_centrality(act_ids, obs, prog=True)
     idx_prog = np.argmax(delta_progs)#np.random.choice(np.flatnonzero(delta_progs == delta_progs.max()))
     return act_ids[idx_prog]
 
@@ -224,7 +224,8 @@ class HeuristicAgent(Agent):
     scores = np.zeros(len(act_ids))
     for i, act_id in enumerate(act_ids):
       if self.env.curr_edge_stats[act_id] == 0:
-        scores[i] = G.get_delta_len_util([act_id])
+        delta_len, _ = G.get_delta_centrality([act_id], obs, prog=False)
+        scores[i] = delta_len0 
 
     return act_ids[np.argmax(scores)]
 
