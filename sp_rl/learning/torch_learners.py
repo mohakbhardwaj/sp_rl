@@ -89,7 +89,7 @@ class QFunction():
     return loss.item()
 
 class Policy():
-  def __init__(self, model, batch_size, train_method='supervised', optim_method='adam', lr=0.001, momentum=0.9, weight_decay=0.1, use_cuda=False):
+  def __init__(self, model, batch_size=32, train_method='supervised', optim_method='adam', lr=0.001, momentum=0.9, weight_decay=0.1, use_cuda=False):
     self.use_cuda = torch.cuda.is_available() if use_cuda else False
     self.device   = torch.device('cuda') if self.use_cuda else torch.device('cpu') 
     self.model    = model
@@ -106,7 +106,6 @@ class Policy():
 
   def predict(self, ftrs):
     scores = self.model(ftrs)
-    # probs = nn.LogSoftmax(dim=0)(scores) 
     return scores
 
   def collate_fn(self, batch):

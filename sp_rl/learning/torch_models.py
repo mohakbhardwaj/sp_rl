@@ -45,7 +45,16 @@ class LinearNet(TorchModel):
   def forward(self, x):
     x = self.fc(x.view(x.shape[0], -1))
     return x
+
+  def set_weights(self, th_arr):
+    self.fc.weight.data = th_arr[0][0:-1].unsqueeze(0)
+    self.fc.bias.data.fill_(th_arr[0][-1].item())
   
+  def get_weights(self):
+    w = self.fc.weight.data
+    b = self.fc.bias.data.unsqueeze(0)
+    th = torch.cat((w,b), dim=1)
+    return th
 
 
 class MLP(TorchModel):

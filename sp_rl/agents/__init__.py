@@ -5,4 +5,5 @@ from heuristic_selector_agent import HeuristicAgent
 from q_learning_agent import QLearningAgent
 from aggrevate_agent import AggrevateAgent
 from dagger_agent import DaggerAgent
+from cem_agent import CEMAgent
 from graph_wrapper import GraphWrapper

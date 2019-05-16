@@ -1,243 +1,162 @@
 #!/usr/bin/env python
+import operator
 import matplotlib.pyplot as plt
 import numpy as np
 import gym
+import torch
 import sp_rl
 import networkx as nx
 from agent import Agent
-from sp_rl.learning import LinearPolicy
+from copy import deepcopy
+from sp_rl.learning import LinearNet
 
 class CEMAgent(Agent):
-  def __init__(self, train_env, valid_env, policy, beta0, gamma, expert_str, G, epochs):
+  def __init__(self, train_env, valid_env, model, G, batch_size, elite_frac, init_std):
     super(CEMAgent, self).__init__(train_env)
-    self.EXPERTS = {'select_expand': None,
-                    'select_forward':   select_forward,
-                    'select_backward':  select_backward,
-                    'select_alternate': select_alternate,
-                    'select_prior':     select_prior,
-                    'select_posterior': select_posterior,
-                    'select_ksp_centrality': select_ksp_centrality,
-                    'select_posteriorksp':   select_posteriorksp,
-                    'select_delta_len':  select_delta_len,
-                    'select_delta_prog': select_delta_prog,
-                    'select_posterior_delta_len': select_posterior_delta_len,
-                    'length_oracle': length_oracle,
-                    'length_oracle_2': length_oracle_2}
-    
     self.train_env = train_env
     self.valid_env = valid_env
-    self.expert = self.EXPERTS[expert_str]
-    self.beta0 = beta0
-    self.gamma = gamma
+    self.model = model
     self.G = G
-    self.train_epochs = epochs
-    self.policy = policy
+    self.batch_size = batch_size
+    self.elite_frac = elite_frac
+    self.init_std = init_std
+    self.n_elite = int(np.round(self.batch_size*self.elite_frac))
 
 
-
-
-  # def __init__(self, env, eps0, epsf, gamma, alpha, k, w_init, b_init, G):
-    # super(CEMAgent, self).__init__(env)
-    # self.eps0 = eps0
-    # self.epsf = epsf
-    # self.gamma = gamma
-    # self.alpha = alpha
-    # self.k = k
-    # # _, self.graph_info = self.env.reset()
-    # self.G = G
-    # # self.num_weights = self.G.num_features
-    # # w_init = np.random.rand(self.num_weights, 1)
-    # # self.w_init = w_init#np.ones(shape=(self.num_weights, 1))
-    # # b_init = 1
-    # self.q_fun = LinearQFunction(w_init, b_init, alpha)
-
-
-  def train(self, num_episodes, num_exp_episodes, render=False, step=True):
-    train_rewards = []
-    train_avg_rewards = []
-    train_loss = []
-    train_avg_loss = []
-    eps_sc = self.eps_schedule(num_exp_episodes, self.eps0, self.epsf)
-    for i in xrange(num_episodes):
-      j = 0
-      obs, _ = self.env.reset()
-      self.G.reset()
-      path = self.get_path(self.G)
-      ftrs = self.G.get_features([self.env.edge_from_action(a) for a in path], j)
-      q_vals = self.q_fun.predict(np.array(ftrs))
-      if render:
-        self.render_env(path, q_vals)
+  def train(self, num_iters, num_episodes_per_iter, num_valid_episodes, quad_ftrs=False):
+    validation_rewards   = np.zeros(shape=(num_iters, num_valid_episodes)) 
+    weights_per_iter = {}
+    th_mean = self.model.get_weights().detach().numpy()
+    th_std = np.ones_like(th_mean) * self.init_std  
+    episodes_per_batch = int(num_episodes_per_iter*1.0/self.batch_size)
+    print episodes_per_batch
+    self.train_env.reset(roll_back=True)
+    best_valid_reward = -np.inf
+    for i in range(num_iters):
+      self.train_env.reset(roll_back=True)
+      print('Iteration = {}, Model weights'.format(i))
+      self.model.print_parameters()
+      # print th_mean, th_std
+      ths = np.array([th_mean + dth for dth in th_std*np.random.randn(self.batch_size, th_mean.size)])
+      # print ths
+      ys = np.array([self.noisy_evaluation(self.train_env, th, episodes_per_batch, quad_ftrs) for th in ths])
+      # print ys
+      elite_inds = ys.argsort()[::-1][:self.n_elite]
+      elite_ths  = ths[elite_inds]
+      th_mean    = elite_ths.mean(axis=0)
+      th_std     = elite_ths.std(axis=0)
+      weights_per_iter[i] = th_mean 
       
-      ep_reward = 0
-      ep_loss = 0
-      # eps = self.eps0
-      # if i >= num_exp_episodes:
-      #   eps = self.eps0/(i+1.0) #Decay epsilon after the exploration phase is over
+      model_curr = deepcopy(self.model)
+      model_curr.set_weights(torch.tensor(th_mean))
 
-      if i < num_exp_episodes:
-        eps = eps_sc[i]
+      if num_valid_episodes == 0:
+        self.model == deepcopy(model_curr)
+        median_reward = 0
       else:
-        eps = self.epsf
-
-      done = False
-      while not done:
-        print('Curr episode = {}'.format(i+1))
-        path = self.get_path(self.G)
-        feas_actions = self.filter_path(path, obs) #Only select from unevaluated edges in shortest path
-        ftrs = self.G.get_features([self.env.edge_from_action(a) for a in feas_actions], j)
-        q_vals = self.q_fun.predict(np.array(ftrs))  
-        #Epsilon greedy action selection
-        if np.random.sample() > eps:
-          idx = np.random.choice(np.flatnonzero(q_vals==q_vals.max())) #random tie breaking
-          print "greedy action"
-        else:
-          idx = self.get_random_action(feas_actions, self.G)
-          
-          print "random action"
-        
-        act_id = feas_actions[idx] 
-        act_e = self.env.edge_from_action(act_id)
-        act_q = q_vals[idx]
-        act_ftrs = ftrs[idx]
-        
-        obs,reward, done, info = self.env.step(act_id)
-        print ('Q_vals = {}, feasible_actions = {}, chosen edge = {}, features = {}'.format(q_vals, feas_actions, act_e, ftrs))
-        self.G.update_edge(act_e, obs[act_id]) #Update agent's internal graph
-        
-        #calculate target and update weights
-        pathd = self.get_path(self.G)
-        target = self.get_q_target(reward, pathd, obs, j+1)
-
-        loss_g = np.array([target - act_q])
-
-        self.q_fun.update_weights_grad(np.array([act_ftrs]), loss_g)
-        ep_reward += reward
-        ep_loss += loss_g[0] * loss_g[0]
-        j += 1
-        
-
-      ep_loss = ep_loss/(j*1.)
-      train_loss.append(ep_loss)
-      train_avg_loss.append(sum(train_loss)*1.0/(i+1.0))
-      train_rewards.append(ep_reward)
-      train_avg_rewards.append(sum(train_rewards)*1.0/(i+1.0))
-      
-    return train_rewards, train_avg_rewards, train_loss, train_avg_loss
+        valid_rewards_dict = self.test(self.valid_env, model_curr, num_valid_episodes, render=False, step=False, quad_ftrs=quad_ftrs)
+        valid_rewards = [it[1] for it in sorted(valid_rewards_dict.items(), key=operator.itemgetter(0))]
+        median_reward = np.median(valid_rewards)
+        if median_reward >= best_valid_reward:
+          print('Best policy yet, saving')
+          self.model = deepcopy(model_curr)
+          self.model.print_parameters()
+          best_valid_reward = median_reward
+        else: print('Keeping old policy')
+        validation_rewards[i,:]   = valid_rewards
+    return validation_rewards, weights_per_iter
 
 
 
-  def test(self, num_episodes, render=True, step=False):
-    test_rewards = []
-    test_avg_rewards = []
-    test_loss = []
-    test_avg_loss = []
-    for i in range(num_episodes):
-      j = 0
-      obs, _ = self.env.reset()
-      self.G.reset()
-      path = self.get_path(self.G)
-      ftrs = self.G.get_features([self.env.edge_from_action(a) for a in path], j)
-      q_vals = self.q_fun.predict(np.array(ftrs))
-      if render:
-        self.render_env(path, q_vals)
-      ep_reward = 0
-      ep_loss = 0
-      done = False
-      while not done:
-        print('Curr episode = {}'.format(i+1))
-        path = self.get_path(self.G)
-        feas_actions = self.filter_path(path, obs)
-        ftrs = self.G.get_features([self.env.edge_from_action(a) for a in feas_actions], j)
-        q_vals = self.q_fun.predict(np.array(ftrs))
+  def test(self, env, model, num_episodes, render=False, step=False, quad_ftrs=False):
+    test_rewards = {}
+    _, _ = env.reset(roll_back=True)
+    model.eval() #Put the model in eval mode to turn off dropout etc.
+    model.cpu() #Copy over the model to cpu if on cuda 
+    with torch.no_grad(): #Turn off autograd
+      for i in xrange(num_episodes):
+        j = 0
+        ep_reward = 0
+        obs, _ = env.reset()
+        self.G.reset()
+        done = False
+
         if render:
-          self.render_env(feas_actions, q_vals)
-        #select greedy action
-        idx = np.random.choice(np.flatnonzero(q_vals==q_vals.max())) #random tie breaking
-        act_id = feas_actions[idx]
+          path = self.get_path(self.G)
+          feas_actions = self.filter_path(path, obs)
+          ftrs = torch.tensor(self.G.get_features(feas_actions, obs, j, quad_ftrs))
+          scores = model(ftrs).detach().numpy()
+          self.render_env(env, path, scores)
 
-        act_e = self.env.edge_from_action(act_id)
-        act_q = q_vals[idx]
-        # print act_e, ftrs
-        print ('Q_vals = {}, feasible_actions = {}, chosen edge = {}, features = {}'.format(q_vals, feas_actions, act_e, ftrs))
-        if step: raw_input('Press enter to execute action')
-        obs, reward, done, info = self.env.step(act_id)
-        # print ('obs = {}, reward = {}, done = {}'.format(obs, reward, done))
-         
-        self.G.update_edge(act_e, obs[act_id])#Update the edge weight according to the result
-        
-        #Get q error 
-        pathd = self.get_path(self.G)
-        target = self.get_q_target(reward, pathd, obs, j+1)
-        loss = (target - act_q) ** 2
-        
-        ep_reward += reward
-        ep_loss += loss
-        j += 1
+        while not done:
+          path = self.get_path(self.G)
+          feas_actions = self.filter_path(path, obs)
+          ftrs = torch.tensor(self.G.get_features(feas_actions, obs, j, quad_ftrs))
+          scores = model(ftrs).detach().numpy()
+          if render:
+            self.render_env(env, feas_actions, scores)
+          idx = np.random.choice(np.flatnonzero(scores==scores.max())) #random tie breaking
+          act_id = feas_actions[idx]
+          if step: raw_input('Press enter to execute action')
+          obs, reward, done, info = env.step(act_id)
+          self.G.update_edge(act_id, obs[act_id])#Update the edge weight according to the results                  
+          ep_reward += reward
+          j += 1
+        # print('Final path = {}'.format([env.edge_from_action(a) for a in path]))
 
-      print('Final path = {}'.format([self.env.edge_from_action(a) for a in path]))
-      #Render environment one last time
-      if render:
-        fr = self.G.get_features([self.env.edge_from_action(a) for a in path], j)
-        qr = self.q_fun.predict(np.array(fr))
-        self.render_env(path, qr)
-        raw_input('Press Enter')
+        if render:
+          fr = torch.tensor(self.G.get_features(path, obs, j, quad_ftrs))
+          sc = policy.predict(fr)
+          self.render_env(env, path, sc.detach().numpy())
+          raw_input('Press Enter')
+        if step: raw_input('Episode over, press enter for next episode')
+        test_rewards[env.world_num] = ep_reward
+    return test_rewards  
 
-      ep_loss = ep_loss/(j*1.0)
-      test_loss.append(ep_loss)
-      test_avg_loss.append(sum(test_loss)/(i+1.0)) 
-      test_rewards.append(ep_reward)
-      test_avg_rewards.append(sum(test_rewards)*1.0/(i+1.0))
-      if step: raw_input('Episode over, press enter for next episode')\
 
-    return test_rewards, test_avg_rewards, test_loss, test_avg_loss
-  
-  def render_env(self, path, q_vals):
+
+  def noisy_evaluation(self, env, th, num_episodes, quad_ftrs):
+    rewards = np.zeros(num_episodes)
+    with torch.no_grad(): #Turn off autograd
+      model = deepcopy(self.model)
+      model.set_weights(torch.tensor(th))
+      print('Noisy evaluation ')
+      model.print_parameters()
+      for i in xrange(num_episodes):
+        print "Here"
+        j = 0
+        ep_reward = 0
+        obs, _ = env.reset()
+        self.G.reset()
+        done = False
+        while not done:
+          path = self.get_path(self.G)
+          feas_actions = self.filter_path(path, obs)
+          ftrs = torch.tensor(self.G.get_features(feas_actions, obs, j, quad_ftrs))
+          scores = model(ftrs).detach().numpy()
+          idx = np.random.choice(np.flatnonzero(scores==scores.max())) #random tie breaking
+          act_id = feas_actions[idx]
+          obs, reward, done, info = env.step(act_id)
+          self.G.update_edge(act_id, obs[act_id])#Update the edge weight according to the results                  
+          ep_reward += reward
+          j += 1
+        # print('Final path = {}'.format([env.edge_from_action(a) for a in path]))
+        rewards[i] = ep_reward
+    return np.median(rewards)
+
+
+
+
+  def render_env(self, env, path, scores):
+    # scores=scores.numpy()
     edge_widths={}
     edge_colors={}
     for k,i in enumerate(path):
-      edge_widths[i] = 4.0#min(max(abs(13.0/(q_vals[k] + 0.001)), 1.5),13.0)#, 5.0)
-      edge_colors[i] = str(1.0) if q_vals[k] == 0.0 else str(1.0 - (q_vals[k][0]/np.min(q_vals)))
-    self.env.render(edge_widths=edge_widths, edge_colors=edge_colors)
-  
-  
-  def get_q_target(self, reward, pathd, obs, itr):
-    pathd_f = self.filter_path(pathd, obs)
-    if len(pathd_f) > 0: #if optimal path has not been found
-      ftrsd = self.G.get_features([self.env.edge_from_action(a) for a in pathd_f], itr)
-      q_valsd = self.q_fun.predict(np.array(ftrsd))
-      ad = np.argmax(q_valsd)
-      target = reward + self.gamma * np.max(q_valsd)
-    else:
-      target = 0.0
-    return target
-
-
-  def eps_schedule(self, decay_episodes, eps0, epsf):
-    sc = np.linspace(epsf, eps0, decay_episodes)
-    return sc[::-1]
-  
-
-  def select_prior(self, feas_actions, G):
-    "Choose the edge most likely to be in collision"
-    edges = list(map(self.env.edge_from_action, feas_actions))
-    priors = G.get_priors(edges)
-    return np.argmax(priors)
-
-  def get_random_action(self, feas_actions, G):
-    num = np.random.randint(0,4)
-    if num == 0: 
-      idx = 0 #select forward
-      # print('Selected forward')
-    elif num == 1:
-      idx = -1 #select backward
-      # print('Selected backward')
-    elif num == 2:
-      idx = self.select_prior(feas_actions, G) #select most likely in collision
-      # print('selected prior')
-    else:
-      idx = np.random.randint(len(feas_actions)) #select purely random action
-      # print('selected pure random')
-    # print idx
-    return idx
+      edge_widths[i] = 5.0
+      color_val = 1.0 - (scores[k][0] - np.min(scores))/(np.max(scores) - np.min(scores))
+      color_val = max(min(color_val, 0.65), 0.1)
+      edge_colors[i] = str(color_val)
+      # print color_val
+    env.render(edge_widths=edge_widths, edge_colors=edge_colors)
 
 
