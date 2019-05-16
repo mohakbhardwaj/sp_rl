@@ -11,11 +11,11 @@ folders=(${base_folder}'dataset_2d_1/cem_linear' ${base_folder}'dataset_2d_2/cem
          ${base_folder}'dataset_2d_4/cem_linear' ${base_folder}'dataset_2d_5/cem_linear' ${base_folder}'dataset_2d_6/cem_linear'\
          ${base_folder}'dataset_2d_7/cem_linear' ${base_folder}'dataset_2d_8/cem_linear')
 model_files=('dagger_10_100_100_linear_length_oracle_0.5_0.001_64_10_0.0001_0' 'dagger_10_100_100_linear_length_oracle_0.5_0.001_64_10_0.0001_0'\
-             'dagger_10_100_100_linear_length_oracle_0.5_0.001_64_10_0.0001_0' 'dagger_10_100_100_linear_length_oracle_0.5_0.001_64_2_0.0001_0'\
+             'dagger_1_200_0_linear_length_oracle_1.0_0.005_64_20_0.0001_0' 'dagger_10_100_100_linear_length_oracle_0.5_0.001_64_2_0.0001_0'\
              'dagger_10_100_100_linear_length_oracle_0.5_0.001_64_10_0.0001_0' 'dagger_10_100_100_linear_length_oracle_0.5_0.001_64_10_0.0001_0'\
              'dagger_10_100_100_linear_length_oracle_0.5_0.001_64_10_0.0001_0')
 
-run_idxs=(1)
+run_idxs=(2)
 
 
 printf "Changing directories"
@@ -24,16 +24,16 @@ cd ../examples
 echo `pwd`
 
 
-num_iters=5
-episodes_per_iter=100
-num_valid_episodes=100
-num_test_episodes=200
+num_iters=1
+episodes_per_iter=5
+num_valid_episodes=1
+num_test_episodes=2
 
 model='linear'
-batch_size=20
+batch_size=5
 elite_frac=0.2
 seed_val=0
-init_std=1.0
+init_std=0.5
 
 
 for ((i=0;i<${#run_idxs[@]};++i)); do
@@ -41,5 +41,5 @@ for ((i=0;i<${#run_idxs[@]};++i)); do
   printf "====Train Environment %s Validation Environment %s Folder %s\n" "${train_envs[idx]}" "${valid_envs[idx]}" "${folders[idx]} ===="
   python2.7 example_cem.py --env ${train_envs[idx]} --valid_env ${valid_envs[idx]} --folder ${folders[idx]} --num_iters ${num_iters}\
          --num_episodes_per_iter ${episodes_per_iter} --num_valid_episodes ${num_valid_episodes} --num_test_episodes ${num_test_episodes}\
-         --model ${model} --model_file ${model_files[idx]} --batch_size ${batch_size} --elite_frac ${elite_frac} --init_std ${init_std} --seed_val ${seed_val} #--quad_ftrs
+         --model ${model} --model_file ${model_files[idx]} --batch_size ${batch_size} --elite_frac ${elite_frac} --init_std ${init_std} --seed_val ${seed_val} --quad_ftrs
 done

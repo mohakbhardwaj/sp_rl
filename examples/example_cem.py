@@ -78,11 +78,11 @@ def main(args):
 
     if args.model == "linear":
       print('Learned weights: ')
-      agent.policy.model.print_parameters()
+      agent.model.print_parameters()
       with open(os.path.abspath(args.folder) + '/weights_per_iter.json', 'w') as fp:
         json.dump(weights_per_iter, fp)
     model_str = get_model_str(args, env)
-    torch.save(agent.policy.model.state_dict(), os.path.abspath(args.folder) + "/" + model_str)
+    torch.save(agent.model.state_dict(), os.path.abspath(args.folder) + "/" + model_str)
 
 
     if args.plot:

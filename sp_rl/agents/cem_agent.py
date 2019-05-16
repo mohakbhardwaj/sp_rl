@@ -29,9 +29,17 @@ class CEMAgent(Agent):
     th_mean = self.model.get_weights().detach().numpy()
     th_std = np.ones_like(th_mean) * self.init_std  
     episodes_per_batch = int(num_episodes_per_iter*1.0/self.batch_size)
-    print episodes_per_batch
-    self.train_env.reset(roll_back=True)
-    best_valid_reward = -np.inf
+    # self.train_env.reset(roll_back=True)
+    
+    if num_valid_episodes == 0:
+      best_valid_reward = -np.inf
+    else: 
+      print('Evaluating initial model on validation')
+      valid_rewards_dict = self.test(self.valid_env, self.model, num_valid_episodes, render=False, step=False, quad_ftrs=quad_ftrs)
+      valid_rewards = [it[1] for it in sorted(valid_rewards_dict.items(), key=operator.itemgetter(0))]
+      best_valid_reward = np.median(valid_rewards)
+
+
     for i in range(num_iters):
       self.train_env.reset(roll_back=True)
       print('Iteration = {}, Model weights'.format(i))
@@ -44,7 +52,7 @@ class CEMAgent(Agent):
       elite_ths  = ths[elite_inds]
       th_mean    = elite_ths.mean(axis=0)
       th_std     = elite_ths.std(axis=0)
-      weights_per_iter[i] = th_mean 
+      weights_per_iter[i] = th_mean.tolist()
       
       model_curr = deepcopy(self.model)
       model_curr.set_weights(torch.tensor(th_mean))
@@ -56,8 +64,8 @@ class CEMAgent(Agent):
         valid_rewards_dict = self.test(self.valid_env, model_curr, num_valid_episodes, render=False, step=False, quad_ftrs=quad_ftrs)
         valid_rewards = [it[1] for it in sorted(valid_rewards_dict.items(), key=operator.itemgetter(0))]
         median_reward = np.median(valid_rewards)
+        print ('Validation reward', median_reward)
         if median_reward >= best_valid_reward:
-          print ('Valid reward', median_reward)
           print('Best policy yet, saving')
           self.model = deepcopy(model_curr)
           self.model.print_parameters()
@@ -120,7 +128,7 @@ class CEMAgent(Agent):
     with torch.no_grad(): #Turn off autograd
       model = deepcopy(self.model)
       model.set_weights(torch.tensor(th))
-      print('Noisy evaluation ')
+      print('Evaluating parameters', th)
       #model.print_parameters()
       for i in xrange(num_episodes):
         j = 0
@@ -141,7 +149,9 @@ class CEMAgent(Agent):
           j += 1
         # print('Final path = {}'.format([env.edge_from_action(a) for a in path]))
         rewards[i] = ep_reward
-    return np.median(rewards)
+    med_reward = np.median(rewards)
+    print('median reards = {}'.format(med_reward))
+    return med_reward
 
 
 
