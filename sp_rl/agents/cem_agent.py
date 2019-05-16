@@ -38,7 +38,6 @@ class CEMAgent(Agent):
       self.model.print_parameters()
       # print th_mean, th_std
       ths = np.array([th_mean + dth for dth in th_std*np.random.randn(self.batch_size, th_mean.size)])
-      # print ths
       ys = np.array([self.noisy_evaluation(self.train_env, th, episodes_per_batch, quad_ftrs) for th in ths])
       # print ys
       elite_inds = ys.argsort()[::-1][:self.n_elite]
@@ -58,6 +57,7 @@ class CEMAgent(Agent):
         valid_rewards = [it[1] for it in sorted(valid_rewards_dict.items(), key=operator.itemgetter(0))]
         median_reward = np.median(valid_rewards)
         if median_reward >= best_valid_reward:
+          print ('Valid reward', median_reward)
           print('Best policy yet, saving')
           self.model = deepcopy(model_curr)
           self.model.print_parameters()
@@ -121,9 +121,8 @@ class CEMAgent(Agent):
       model = deepcopy(self.model)
       model.set_weights(torch.tensor(th))
       print('Noisy evaluation ')
-      model.print_parameters()
+      #model.print_parameters()
       for i in xrange(num_episodes):
-        print "Here"
         j = 0
         ep_reward = 0
         obs, _ = env.reset()

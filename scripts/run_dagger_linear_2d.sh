@@ -7,11 +7,11 @@ valid_envs=('graphEnv2DValidation-v1' 'graphEnv2DValidation-v2' 'graphEnv2DValid
 
 
 base_folder='../../sp_rl_new_experiments/'
-folders=(${base_folder}'dataset_2d_1/dagger_linear_mix' ${base_folder}'dataset_2d_2/dagger_linear_mix' ${base_folder}'dataset_2d_3/dagger_linear_mix'\
-         ${base_folder}'dataset_2d_4/dagger_linear_mix' ${base_folder}'dataset_2d_5/dagger_linear_mix' ${base_folder}'dataset_2d_6/dagger_linear_mix'\
-         ${base_folder}'dataset_2d_7/dagger_linear_mix' ${base_folder}'dataset_2d_8/dagger_linear_mix')
+folders=(${base_folder}'dataset_2d_1/dagger_linear_extraf' ${base_folder}'dataset_2d_2/dagger_linear_extraf' ${base_folder}'dataset_2d_3/dagger_linear_extraf'\
+         ${base_folder}'dataset_2d_4/dagger_linear_extraf' ${base_folder}'dataset_2d_5/dagger_linear_extraf' ${base_folder}'dataset_2d_6/dagger_linear_extraf'\
+         ${base_folder}'dataset_2d_7/dagger_linear_extraf' ${base_folder}'dataset_2d_8/dagger_linear_extraf')
 
-run_idxs=(1 2)
+run_idxs=(0 1 2 3 4 5 6)
 
 
 printf "Changing directories"
@@ -28,11 +28,11 @@ num_test_episodes=200
 model='linear'
 expert='length_oracle'
 beta0=0.5
-alpha=0.001
+alpha=0.005
 momentum=0.0
 gamma=0.5
 batch_size=64
-epochs=3
+epochs=10
 weight_decay=0.0001
 seed_val=0
 

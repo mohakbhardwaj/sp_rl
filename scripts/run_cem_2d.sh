@@ -7,15 +7,15 @@ valid_envs=('graphEnv2DValidation-v1' 'graphEnv2DValidation-v2' 'graphEnv2DValid
 
 
 base_folder='../../sp_rl_new_experiments/'
-folders=(${base_folder}'dataset_2d_1/cem_scratch' ${base_folder}'dataset_2d_2/cem_scratch' ${base_folder}'dataset_2d_3/cem_scratch'\
-         ${base_folder}'dataset_2d_4/cem_linear' ${base_folder}'dataset_2d_5/cem_scratch' ${base_folder}'dataset_2d_6/cem_scratch'\
-         ${base_folder}'dataset_2d_7/cem_scratch' ${base_folder}'dataset_2d_8/cem_scratch')
+folders=(${base_folder}'dataset_2d_1/cem_linear' ${base_folder}'dataset_2d_2/cem_linear' ${base_folder}'dataset_2d_3/cem_linear'\
+         ${base_folder}'dataset_2d_4/cem_linear' ${base_folder}'dataset_2d_5/cem_linear' ${base_folder}'dataset_2d_6/cem_linear'\
+         ${base_folder}'dataset_2d_7/cem_linear' ${base_folder}'dataset_2d_8/cem_linear')
 model_files=('dagger_10_100_100_linear_length_oracle_0.5_0.001_64_10_0.0001_0' 'dagger_10_100_100_linear_length_oracle_0.5_0.001_64_10_0.0001_0'\
              'dagger_10_100_100_linear_length_oracle_0.5_0.001_64_10_0.0001_0' 'dagger_10_100_100_linear_length_oracle_0.5_0.001_64_2_0.0001_0'\
              'dagger_10_100_100_linear_length_oracle_0.5_0.001_64_10_0.0001_0' 'dagger_10_100_100_linear_length_oracle_0.5_0.001_64_10_0.0001_0'\
              'dagger_10_100_100_linear_length_oracle_0.5_0.001_64_10_0.0001_0')
 
-run_idxs=(3)
+run_idxs=(1)
 
 
 printf "Changing directories"
@@ -24,7 +24,7 @@ cd ../examples
 echo `pwd`
 
 
-num_iters=10
+num_iters=5
 episodes_per_iter=100
 num_valid_episodes=100
 num_test_episodes=200
