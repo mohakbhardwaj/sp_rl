@@ -37,11 +37,20 @@ def select_delta_prog(act_ids, obs, iter, G, env):
   return idx_prog
 
 def select_posterior_delta_len(act_ids, obs, iter, G, env):
+  # p = G.get_posterior(act_ids, obs)
+  # dl = G.get_delta_len_util(act_ids)
+  # pdl = p * dl
+  # idx_pdl = np.argmax(pdl)
+  # return idx_pdl 
   p = G.get_posterior(act_ids, obs)
-  dl = G.get_delta_len_util(act_ids)
+  dl, _ = G.get_delta_centrality(act_ids, obs, prog=False)
   pdl = p * dl
   idx_pdl = np.argmax(pdl)
   return idx_pdl 
+
+
+
+
 
 def select_ksp_centrality(act_ids, obs, iter, G, env):
   ksp_centr = G.get_ksp_centrality(act_ids)

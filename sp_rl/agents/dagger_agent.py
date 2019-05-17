@@ -77,7 +77,6 @@ class DaggerAgent(Agent):
             ftrs   = torch.tensor(self.G.get_features(feas_actions, obs, j, quad_ftrs))
             scores = policy_curr.predict(ftrs).detach().numpy()
             self.render_env(self.train_env, path, scores)
-
           done = False          
           while not done:
             path = self.get_path(self.G)
