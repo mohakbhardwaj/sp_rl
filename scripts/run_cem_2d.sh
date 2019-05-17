@@ -11,7 +11,7 @@ folders=(${base_folder}'dataset_2d_1/cem_linear' ${base_folder}'dataset_2d_2/cem
          ${base_folder}'dataset_2d_4/cem_linear' ${base_folder}'dataset_2d_5/cem_linear' ${base_folder}'dataset_2d_6/cem_linear'\
          ${base_folder}'dataset_2d_7/cem_linear' ${base_folder}'dataset_2d_8/cem_linear')
 model_files=('dagger_10_100_100_linear_length_oracle_0.5_0.001_64_10_0.0001_0' 'dagger_10_100_100_linear_length_oracle_0.5_0.001_64_10_0.0001_0'\
-             'dagger_1_200_0_linear_length_oracle_1.0_0.005_64_20_0.0001_0' 'dagger_10_100_100_linear_length_oracle_0.5_0.001_64_2_0.0001_0'\
+             'dagger_10_100_100_linear_length_oracle_0.5_0.005_64_10_0.0001_0' 'dagger_10_100_100_linear_length_oracle_0.5_0.001_64_2_0.0001_0'\
              'dagger_10_100_100_linear_length_oracle_0.5_0.001_64_10_0.0001_0' 'dagger_10_100_100_linear_length_oracle_0.5_0.001_64_10_0.0001_0'\
              'dagger_10_100_100_linear_length_oracle_0.5_0.001_64_10_0.0001_0')
 
@@ -24,16 +24,16 @@ cd ../examples
 echo `pwd`
 
 
-num_iters=1
-episodes_per_iter=5
-num_valid_episodes=1
-num_test_episodes=2
+num_iters=10
+episodes_per_iter=200
+num_valid_episodes=0
+num_test_episodes=200
 
 model='linear'
-batch_size=5
-elite_frac=0.2
+batch_size=200
+elite_frac=0.3
 seed_val=0
-init_std=0.5
+init_std=2.0
 
 
 for ((i=0;i<${#run_idxs[@]};++i)); do
