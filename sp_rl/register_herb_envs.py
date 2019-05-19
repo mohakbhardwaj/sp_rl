@@ -107,6 +107,6 @@ register(
 register(
     id='graphEnvHerbTest-v5',
     entry_point='sp_rl.envs:GraphEnvHerb',
-    kwargs={'dataset_folder' : os.path.abspath('../../rss_lsp_datasets/dataset_herb_5'),
+    kwargs={'dataset_folder' : os.path.abspath('../../graph_collision_checking_dataset/dataset_herb_5'),
             'mode' : 'test'}
 )

@@ -48,14 +48,6 @@ def load_raw_data(file):
       if row[0] == 'validation_rewards':
         validation_rewards = np.asarray(arr)
 
-
-          # print row[1:]
-        # if line_count == 0:
-        #   print('Column names are ', row)
-        #   line_count += 1
-        # else:
-        #   line_count += 1
-    
   return train_rewards, validation_rewards
 
 def calculate_metrics(raw_results):
@@ -78,9 +70,10 @@ def main(args):
   ax.legend()
   ax.set_xlim([xdata[0], xdata[-1]])
   ax.set_ylim([-110, -20])
-  ax.set_xlabel('Training iterations', fontsize=12)
-  ax.set_ylabel('Median reward', fontsize=12)
+  ax.set_xlabel('Training iterations', fontsize=14)
+  ax.set_ylabel('Median reward', fontsize=14)
 
+  fig.savefig("/home/mohak/Documents/writing/research/rss_2019_lsp_learning/figs/dagger_plot_herb.pdf", bbox_inches='tight')
   plt.show()
     # print medians.shape, lquants.shape, uquants.shape
   
