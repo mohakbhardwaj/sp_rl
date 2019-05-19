@@ -24,13 +24,13 @@ cd ../examples
 echo `pwd`
 
 
-num_iters=10
-episodes_per_iter=200
+num_iters=20
+episodes_per_iter=100
 num_valid_episodes=0
 num_test_episodes=200
 
 model='linear'
-batch_size=200
+batch_size=100
 elite_frac=0.3
 seed_val=0
 init_std=2.0

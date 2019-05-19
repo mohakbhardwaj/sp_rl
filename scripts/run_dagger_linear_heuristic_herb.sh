@@ -8,7 +8,7 @@ base_folder='../../sp_rl_new_experiments/'
 folders=(${base_folder}'dataset_herb_1/dagger_linear_strollr' ${base_folder}'dataset_herb_2/dagger_linear_strollr' ${base_folder}'dataset_herb_3/dagger_linear_strollr'\
          ${base_folder}'dataset_herb_4/dagger_linear_strollr' ${base_folder}'dataset_herb_5/dagger_linear_strollr')
 
-run_idxs=(3 4)
+run_idxs=(4)
 heuristics=('select_prior' 'select_forward' 'select_backward' 'select_posterior_delta_len' 'select_backward')
 
 printf "Changing directories"
@@ -18,7 +18,7 @@ echo `pwd`
 
 
 
-num_iters=10
+num_iters=13
 episodes_per_iter=100
 num_valid_episodes=50
 num_test_episodes=200
