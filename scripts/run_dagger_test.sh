@@ -9,13 +9,17 @@ valid_envs=('graphEnv2DTest-v1' 'graphEnv2DTest-v2' 'graphEnv2DTest-v3' 'graphEn
 base_folder='../../sp_rl_new_experiments/'
 
 #Dagger linear
-folders=(${base_folder}'dataset_2d_1/dagger_linear_quad' ${base_folder}'dataset_2d_2/dagger_linear' ${base_folder}'dataset_2d_3/dagger_linear'\
-         ${base_folder}'dataset_2d_4/dagger_linear_mix' ${base_folder}'dataset_2d_5/dagger_linear' ${base_folder}'dataset_2d_6/dagger_linear'\
-         ${base_folder}'dataset_2d_7/dagger_linear' ${base_folder}'dataset_2d_8/dagger_linear'\
+folders=(${base_folder}'dataset_2d_1/dagger_linear_extraf' ${base_folder}'dataset_2d_2/dagger_linear_extraf' ${base_folder}'dataset_2d_3/dagger_linear_extraf'\
+         ${base_folder}'dataset_2d_4/dagger_linear_extraf' ${base_folder}'dataset_2d_5/dagger_linear_extraf' ${base_folder}'dataset_2d_6/dagger_linear_extraf'\
+         ${base_folder}'dataset_2d_7/dagger_linear_extraf' ${base_folder}'dataset_2d_8/dagger_linear_extraf'\
          ${base_folder}'dataset_herb_4/dagger_linear' ${base_folder}'dataset_herb_5/dagger_linear')
 
 
-model_file='dagger_10_100_100_linear_length_oracle_0.5_0.001_64_2_0.0001_0'
+model_files=('dagger_10_100_100_linear_length_oracle_0.5_0.005_64_10_0.0001_0' 'dagger_10_100_100_linear_length_oracle_0.5_0.005_64_10_0.0001_0'\
+             'dagger_10_100_100_linear_length_oracle_0.5_0.005_64_10_0.0001_0' 'dagger_10_100_100_linear_length_oracle_0.5_0.005_64_10_0.0001_0'\
+             'dagger_10_100_100_linear_length_oracle_0.5_0.005_64_10_0.0001_0' 'dagger_10_100_100_linear_length_oracle_0.5_0.005_64_10_0.0001_0'\
+             'dagger_10_100_100_linear_length_oracle_0.5_0.005_64_10_0.0001_0', 'dagger_10_100_60_linear_length_oracle_0.5_0.005_64_10_0.0001_0'\
+             'dagger_10_100_60_linear_length_oracle_0.5_0.005_64_10_0.0001_0', 'dagger_10_100_60_linear_length_oracle_0.5_0.005_64_10_0.0001_0')
 
 #Dagger linear with heuristic roll-out
 # folders=(${base_folder}'dataset_2d_1/dagger_linear_hr' ${base_folder}'dataset_2d_2/dagger_linear_hr' ${base_folder}'dataset_2d_3/dagger_linear_hr'\
@@ -43,7 +47,7 @@ model_file='dagger_10_100_100_linear_length_oracle_0.5_0.001_64_2_0.0001_0'
 
 
 
-run_idxs=(3)
+run_idxs=(8 9)
 # 3 5 6 7 8 9)
 # 8 9)
 
@@ -75,5 +79,5 @@ for ((i=0;i<${#run_idxs[@]};++i)); do
   python2.7 example_dagger.py --env ${train_envs[idx]} --valid_env ${valid_envs[idx]} --folder ${folders[idx]} --num_iters ${num_iters}\
          --num_episodes_per_iter ${epsiodes_per_iter} --num_valid_episodes ${num_valid_episodes} --num_test_episodes ${num_test_episodes}\
          --model ${model} --expert ${expert} --beta0 ${beta0} --gamma ${gamma} --alpha ${alpha} --batch_size ${batch_size} --epochs ${epochs}\
-         --weight_decay ${weight_decay} --seed_val ${seed_val} --model_file ${model_file} --test # --render --step
+         --weight_decay ${weight_decay} --seed_val ${seed_val} --model_file ${model_files[i]} --test --quad_ftrs # --render --step
 done
