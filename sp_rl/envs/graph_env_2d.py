@@ -15,10 +15,10 @@ from sp_rl.utils.math_utils import euc_dist
 
 class GraphEnv2D(gym.Env):
   metadata = {'render.modes': ['human'],
-              'max_train_envs': 400,
+              'max_train_envs': 600,
               'num_train_envs': 200,
-              'num_validation_envs': 300,
-              'num_test_envs': 300}
+              'num_validation_envs': 200,
+              'num_test_envs': 200}
 
   COLOR = {1 : 'g', #Known Free
            0 : 'r', #Known Invalid
@@ -61,7 +61,11 @@ class GraphEnv2D(gym.Env):
       pos_lines = f.read().splitlines()
 
     nnodes = int(graph_lines[0].split()[1])
-    nedges = int(int(graph_lines[1].split()[1])/2)
+    if self.file_idxing == 1:
+      nedges = int(int(graph_lines[1].split()[1])/2)
+    else:
+      nedges = int(graph_lines[1].split()[1])
+
     action_to_edge_tup = {}
     edge_tup_to_action = {}
     action_to_edge_id  = {}
@@ -79,9 +83,14 @@ class GraphEnv2D(gym.Env):
     act_num = 0
     for i in xrange(2, len(graph_lines)):
       s = graph_lines[i].split()
-      eid = int(s[0]) - 1 #edges ids in dataset start with 
-      pid = int(s[1]) - 1 #parent node
-      cid = int(s[2]) - 1 #child node
+      if self.file_idxing == 1:
+        eid = int(s[0]) - 1 #edges ids in dataset start with 
+        pid = int(s[1]) - 1 #parent node
+        cid = int(s[2]) - 1 #child node
+      else: 
+        eid = int(s[0])  #edges ids in dataset start with 
+        pid = int(s[1])  #parent node
+        cid = int(s[2])  #child node
       w = float(s[3])     #edge weight
       if (pid, cid) not in edge_tup_to_action and (cid, pid) not in edge_tup_to_action:
         e = G.add_edge(pid, cid)
@@ -109,8 +118,11 @@ class GraphEnv2D(gym.Env):
     string = folder  + '/coll_check_results.dat'
     edge_stats = np.loadtxt(os.path.abspath(string), dtype=int, delimiter=',')
     edge_stats = edge_stats[:, list(self.action_to_edge_id.values())]
-    with open(os.path.join(folder, "start_idx.dat")) as f: source_node = int(f.read().splitlines()[0].split()[0]) - 1
-    with open(os.path.join(folder, "goal_idx.dat")) as f: target_node = int(f.read().splitlines()[0].split()[0])  - 1
+    with open(os.path.join(folder, "start_idx.dat")) as f: source_node = int(f.read().splitlines()[0].split()[0])
+    with open(os.path.join(folder, "goal_idx.dat")) as f: target_node = int(f.read().splitlines()[0].split()[0]) 
+    if self.file_idxing == 1: 
+      source_node = source_node - 1
+      target_node = target_node - 1
     return source_node, target_node, edge_stats#, edge_stats_full
   
   def reinit_graph_status(self, edge_stats):
