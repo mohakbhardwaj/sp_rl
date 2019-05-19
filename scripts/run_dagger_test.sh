@@ -12,7 +12,7 @@ base_folder='../../sp_rl_new_experiments/'
 folders=(${base_folder}'dataset_2d_1/dagger_linear_extraf' ${base_folder}'dataset_2d_2/dagger_linear_extraf' ${base_folder}'dataset_2d_3/dagger_linear_extraf'\
          ${base_folder}'dataset_2d_4/dagger_linear_extraf' ${base_folder}'dataset_2d_5/dagger_linear_extraf' ${base_folder}'dataset_2d_6/dagger_linear_extraf'\
          ${base_folder}'dataset_2d_7/dagger_linear_extraf' ${base_folder}'dataset_2d_8/dagger_linear_extraf'\
-         ${base_folder}'dataset_herb_4/dagger_linear' ${base_folder}'dataset_herb_5/dagger_linear')
+         ${base_folder}'dataset_herb_4/dagger_linear_mix'  ${base_folder}'dataset_herb_5/dagger_linear_mix')
 
 
 model_files=('dagger_10_100_100_linear_length_oracle_0.5_0.005_64_10_0.0001_0' 'dagger_10_100_100_linear_length_oracle_0.5_0.005_64_10_0.0001_0'\
@@ -79,5 +79,5 @@ for ((i=0;i<${#run_idxs[@]};++i)); do
   python2.7 example_dagger.py --env ${train_envs[idx]} --valid_env ${valid_envs[idx]} --folder ${folders[idx]} --num_iters ${num_iters}\
          --num_episodes_per_iter ${epsiodes_per_iter} --num_valid_episodes ${num_valid_episodes} --num_test_episodes ${num_test_episodes}\
          --model ${model} --expert ${expert} --beta0 ${beta0} --gamma ${gamma} --alpha ${alpha} --batch_size ${batch_size} --epochs ${epochs}\
-         --weight_decay ${weight_decay} --seed_val ${seed_val} --model_file ${model_files[i]} --test --quad_ftrs # --render --step
+         --weight_decay ${weight_decay} --seed_val ${seed_val} --model_file ${model_files[idx]} --test --quad_ftrs # --render --step
 done
