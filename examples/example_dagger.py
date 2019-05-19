@@ -60,7 +60,10 @@ def main(args):
   # print('Function approximation model = {}'.format(model))
   policy = Policy(model, batch_size, train_method='supervised', optim_method=optim_method, lr=alpha, momentum = momentum, weight_decay=weight_decay, use_cuda=args.use_cuda)
   agent  = DaggerAgent(env, valid_env, policy, beta0, gamma, args.expert, G, train_epochs)
-  
+  # weights = torch.tensor(np.array([[0.09150605442884517, -0.04107397928390352, 0.3163838659812974, 0.3662182613524254, -0.12681727289197556, 0.2632219650512695, 0.07835773256113016]]))
+  # policy.model.set_weights(weights)
+  # torch.save(agent.policy.model.state_dict(), os.path.abspath(args.folder) + "/" + 'testing')
+  # raw_input('...')
   if not args.test:
     start_t = time.time()
     train_rewards, train_loss, train_accs, validation_reward, \
