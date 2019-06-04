@@ -7,9 +7,9 @@ base_folder='../../sp_rl_new_experiments/'
 folders=(${base_folder}'dataset_2d_1/lsp_selectors_valid' ${base_folder}'dataset_2d_2/lsp_selectors_valid' ${base_folder}'dataset_2d_3/lsp_selectors_valid'\
          ${base_folder}'dataset_2d_4/lsp_selectors_valid' ${base_folder}'dataset_2d_5/lsp_selectors_valid' ${base_folder}'dataset_2d_6/lsp_selectors_valid'\
          ${base_folder}'dataset_2d_7/lsp_selectors_valid' ${base_folder}'dataset_2d_8/lsp_selectors_valid')
-selectors=('length_oracle' 'select_alternate' 'select_posterior_delta_len')
+selectors=('select_forward' 'select_backward' 'select_prior' 'select_posterior' 'select_delta_len' 'select_delta_prog' 'length_oracle' 'select_alternate' 'select_posterior_delta_len')
 
-run_idxs=(0)
+run_idxs=(7)
 
 num_episodes=200
 seed_val=0

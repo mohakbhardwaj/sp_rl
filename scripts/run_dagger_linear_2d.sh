@@ -7,11 +7,11 @@ valid_envs=('graphEnv2DValidation-v1' 'graphEnv2DValidation-v2' 'graphEnv2DValid
 
 
 base_folder='../../sp_rl_new_experiments/'
-folders=(${base_folder}'dataset_2d_1/dagger_linear_moredata' ${base_folder}'dataset_2d_2/dagger_linear_moredata' ${base_folder}'dataset_2d_3/dagger_linear_moredata'\
+folders=(${base_folder}'dataset_2d_1/dagger_linear_moredata' ${base_folder}'dataset_2d_2/dagger_linear_extraf' ${base_folder}'dataset_2d_3/dagger_linear_moredata'\
          ${base_folder}'dataset_2d_4/dagger_linear_moredata' ${base_folder}'dataset_2d_5/dagger_linear_mix' ${base_folder}'dataset_2d_6/dagger_linear_moredata'\
          ${base_folder}'dataset_2d_7/dagger_linear_moredata' ${base_folder}'dataset_2d_8/dagger_linear_extraf')
 
-run_idxs=(7)
+run_idxs=(1)
 
 
 printf "Changing directories"
@@ -20,15 +20,15 @@ cd ../examples
 echo `pwd`
 
 
-num_iters=1
-episodes_per_iter=1
-num_valid_episodes=7
-num_test_episodes=2
+num_iters=10
+episodes_per_iter=100
+num_valid_episodes=70
+num_test_episodes=200
 
 model='linear'
 expert='length_oracle'
 beta0=0.5
-alpha=0.005
+alpha=0.001
 momentum=0.0
 gamma=0.5
 batch_size=64

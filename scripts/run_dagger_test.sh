@@ -60,7 +60,7 @@ echo `pwd`
 num_iters=10
 epsiodes_per_iter=20
 num_valid_episodes=0
-num_test_episodes=2
+num_test_episodes=200
 
 model='linear'
 expert='length_oracle'
