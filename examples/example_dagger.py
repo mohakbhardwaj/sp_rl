@@ -160,11 +160,13 @@ def main(args):
       raise ValueError, 'Model file not specified'
     policy.model.load_state_dict(torch.load(os.path.join(args.folder, args.model_file)))
     if args.model == 'linear': print(policy.model.fc.weight, policy.model.fc.bias)
+    if args.dump: dump_folder = args.folder
+    else: dump_folder=None
     test_env = gym.make(args.valid_env)
     test_env.seed(args.seed_val)
     _, _ = test_env.reset()
     # raw_input('Weights loaded. Press enter to start testing...')
-    test_rewards_dict, test_acc_dict = agent.test(test_env, policy, args.num_test_episodes, render=args.render, step=args.step, quad_ftrs=args.quad_ftrs)
+    test_rewards_dict, test_acc_dict = agent.test(test_env, policy, args.num_test_episodes, render=args.render, step=args.step, quad_ftrs=args.quad_ftrs, dump_folder=dump_folder)
   
 
 
@@ -225,6 +227,7 @@ if __name__ == "__main__":
   parser.add_argument("--re_init", action='store_true', help='Whether to re-initialize policy at every iteration of DAgger training')
   parser.add_argument("--test", action='store_true', help='Loads weights from the model file and runs testing')
   parser.add_argument("--plot", action='store_true', help='Whether to plot results or not')
+  parser.add_argument("--dump", action='store_true', help='Whether to dump frames or not')
   parser.add_argument("--heuristic", type=str, help="Heuristic policy to roll-in with. If not provided, expert will be used foll roll-in")
   parser.add_argument("--mixed_rollin", action='store_true', help="Roll-in with heuristic and oracle")
   parser.add_argument("--quad_ftrs", action='store_true', help="Use quadratic features or not")

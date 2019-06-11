@@ -158,7 +158,7 @@ class DaggerAgent(Agent):
     return train_rewards, train_loss, train_accs, validation_reward, validation_accuracy, dataset_size, weights_per_iter, features_per_iter, labels_per_iter
 
 
-  def test(self, env, policy, num_episodes, render=False, step=False, quad_ftrs=False):
+  def test(self, env, policy, num_episodes, render=False, step=False, quad_ftrs=False, dump_folder=None):
     test_rewards = {}
     test_acc = {}
     _, _ = env.reset(roll_back=True)
@@ -177,7 +177,9 @@ class DaggerAgent(Agent):
           ftrs = torch.tensor(self.G.get_features(feas_actions, obs, j, quad_ftrs))
           scores = policy.predict(ftrs)
           scores = scores.detach().numpy()
-          self.render_env(env, path, scores)
+          # self.render_env(env, path, scores)
+          act_id = feas_actions[np.argmax(scores)]
+          self.render_env(env, self.G, obs, path, act_id, dump_folder)
         done = False
         # print('Curr episode = {}'.format(i+1))
         while not done:
@@ -185,14 +187,16 @@ class DaggerAgent(Agent):
           feas_actions = self.filter_path(path, obs)
           ftrs = torch.tensor(self.G.get_features(feas_actions, obs, j, quad_ftrs))
           scores = policy.predict(ftrs).detach().numpy()
-          if render:
-            self.render_env(env, feas_actions, scores)
           #select greedy action
           idx = np.random.choice(np.flatnonzero(scores==scores.max())) #random tie breaking
           idx_exp = self.expert(feas_actions, obs, j, self.G, env)
           if idx == idx_exp: ep_acc = ep_acc + 1.0
 
           act_id = feas_actions[idx]
+          if render:
+            # self.render_env(env, feas_actions, scores)
+            self.render_env(env, self.G, obs, path, act_id, dump_folder=dump_folder)
+
           if step: raw_input('Press enter to execute action')
           obs, reward, done, info = env.step(act_id)
           self.G.update_edge(act_id, obs[act_id])#Update the edge weight according to the result
@@ -203,7 +207,8 @@ class DaggerAgent(Agent):
         if render:
           fr = torch.tensor(self.G.get_features(path, obs, j, quad_ftrs))
           sc = policy.predict(fr)
-          self.render_env(env, path, sc.detach().numpy())
+          # self.render_env(env, path, sc.detach().numpy())
+          self.render_env(env, self.G, obs, path, dump_folder=dump_folder)
           raw_input('Press Enter')
       
         test_rewards[env.world_num] = ep_reward
@@ -213,17 +218,47 @@ class DaggerAgent(Agent):
     return test_rewards, test_acc
   
 
-  def render_env(self, env, path, scores):
-    # scores=scores.numpy()
+  # def render_env(self, env, path, scores):
+  #   # scores=scores.numpy()
+  #   # edge_widths={}
+  #   # edge_colors={}
+  #   # for k,i in enumerate(path):
+  #   #   edge_widths[i] = 5.0
+      
+  #   #   # print color_val
+  #   # env.render(edge_widths=edge_widths, edge_colors=edge_colors)
+
+  #   edge_widths={}
+  #   edge_colors={}
+  #   posts = self.G.get_posterior(range(len(obs)), obs)
+  #   for i in range(len(obs)):
+  #     edge_widths[i] = posts[i] + 0.15
+    
+  #   for i in path:
+  #     edge_widths[i] = 5.0
+  #     # edge_colors[i] = str(0.4)
+  #     color_val = 1.0 - (scores[k][0] - np.min(scores))/(np.max(scores) - np.min(scores))
+  #     color_val = max(min(color_val, 0.65), 0.1)
+  #     edge_colors[i] = str(color_val)
+  #     if i == act_id:
+  #       edge_widths[i] = 7.0
+  #       edge_colors[i] = str(0.0)
+  #   self.env.render(edge_widths=edge_widths, edge_colors=edge_colors)
+
+  
+  def render_env(self, env, G, obs, path, act_id=-1, dump_folder=None):
     edge_widths={}
     edge_colors={}
-    for k,i in enumerate(path):
+    posts = G.get_posterior(range(len(obs)), obs)
+    for i in range(len(obs)):
+      edge_widths[i] = posts[i] + 0.15
+    for i in path:
       edge_widths[i] = 5.0
-      color_val = 1.0 - (scores[k][0] - np.min(scores))/(np.max(scores) - np.min(scores))
-      color_val = max(min(color_val, 0.65), 0.1)
-      edge_colors[i] = str(color_val)
-      # print color_val
-    env.render(edge_widths=edge_widths, edge_colors=edge_colors)
+      edge_colors[i] = str(0.4)
+      if i == act_id:
+        edge_widths[i] = 7.0
+        edge_colors[i] = str(0.0)
+    env.render(edge_widths=edge_widths, edge_colors=edge_colors, dump_folder=dump_folder, curr_sp_len = G.curr_sp_len)  
 
   def beta_schedule(self, decay_episodes, eps0, epsf):
     sc = np.linspace(epsf, eps0, decay_episodes)

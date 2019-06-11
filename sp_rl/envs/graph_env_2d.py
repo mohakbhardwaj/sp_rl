@@ -53,6 +53,9 @@ class GraphEnv2D(gym.Env):
     self.observation_space = spaces.Discrete(3**self.nedges)
     self.grid = NDGrid(self.nedges, [3]*self.nedges)
     self.render_called = False
+    self.step_num = 0
+    self.valid_checked = 0
+    self.invalid_checked = 0
 
   def initialize_graph(self, folder):
     with open(os.path.join(folder, "graph.txt")) as f:
@@ -141,6 +144,10 @@ class GraphEnv2D(gym.Env):
     done = False
     reward = -1
     self.obs[action] = self.curr_edge_stats[action] #result #Update the observation
+    self.step_num += 1
+    if self.curr_edge_stats[action] == 0: self.invalid_checked += 1
+    if self.curr_edge_stats[action] == 1: self.valid_checked += 1
+
     if self.eval_path(self.sp): #If the agent has discovered the shortest path, episode ends
       done = True
       reward = -1
@@ -149,6 +156,7 @@ class GraphEnv2D(gym.Env):
 
   def reset(self, roll_back=False):
     self.obs = np.array([-1]*self.nedges)
+    self.step_num = 0; self.valid_checked = 0; self.invalid_checked = 0
     if roll_back:
       self.curr_idx = 0
       self.first_reset=True
@@ -159,6 +167,7 @@ class GraphEnv2D(gym.Env):
       while not solvable:
         if self.mode == "train":
           self.world_num = self.world_arr[self.curr_idx]#np.random.choice(self.world_arr)
+          self.world_num = 197
         else:
           self.world_num = self.world_arr[self.curr_idx]
         self.curr_idx = (self.curr_idx + 1) % self.max_envs
@@ -179,17 +188,19 @@ class GraphEnv2D(gym.Env):
                   'source_node':self.source_node, 'target_node':self.target_node, 'action_to_edge': self.action_to_edge_tup, 
                   'edge_to_action': self.edge_tup_to_action}
     self.first_reset = False
-    return self.obs,  graph_info
+    return self.obs, graph_info
   
-  def render(self, mode='human', edge_widths={}, edge_colors={}, close=False, dump_folder=None):
+  def render(self, mode='human', edge_widths={}, edge_colors={}, close=False, dump_folder=None, curr_sp_len=0.0):
     edge_width_list = []
     edge_color_list = []
     for edge in self.Gdraw.edges():
       i = self.edge_tup_to_action[edge]
-      if i in edge_widths:
-        edge_width_list.append(edge_widths[i])
-      elif self.obs[i] != -1:
-        edge_width_list.append(2.5)
+      if i in edge_widths: #self.obs[i] != -1:
+        edge_width = edge_widths[i]
+        # edge_width_list.append(2.5)
+        if self.obs[i] != -1 : #in edge_widths:
+          edge_width += 2.5 #edge_widths[i]
+        edge_width_list.append(edge_width)
       else:
         edge_width_list.append(0.5)
 
@@ -207,8 +218,22 @@ class GraphEnv2D(gym.Env):
     self.ax.imshow(self.img, interpolation='nearest', origin='lower', extent=[0,1,0,1], cmap='gray')
     nx.draw_networkx_edges(self.Gdraw, self.pos, ax=self.ax, edge_color=edge_color_list, width=edge_width_list, alpha=0.6)
     nx.draw_networkx_nodes(self.Gdraw, self.pos, ax=self.ax, nodelist=[self.source_node, self.target_node], node_color=['b', 'g'], node_size=20)
+    textstr = 'Edges checked (Total) = %03d (Invalid) = %03d Path length = %.3f'%(self.step_num, self.invalid_checked, curr_sp_len)
+
+    # these are matplotlib.patch.Patch properties
+    props = dict(boxstyle='round', color='white', facecolor='white', alpha=0.3)
+
+    # place a text box in upper left in axes coords
+    self.ax.text(-0.14, 1.08, textstr, transform=self.ax.transAxes, fontsize=10,
+      verticalalignment='top', bbox=props)    
+
+
     self.fig.canvas.draw()
-    # if dump_folder is not None:
+    if dump_folder is not None:
+      file_name = dump_folder + '/' + str(self.step_num)
+      print('Dumping frame %s'%file_name)
+      self.fig.savefig(file_name+'.png', bbox_inches='tight', dpi=300)
+
 
 
   def seed(self, seed=None):

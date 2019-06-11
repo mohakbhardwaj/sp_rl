@@ -38,7 +38,7 @@ class HeuristicAgent(Agent):
     return self.test(num_episodes, render, step)
     
 
-  def test(self, num_episodes, render=True, step=False):
+  def test(self, num_episodes, render=True, step=False, dump_folder=None):
     start_t = time.time()
     test_rewards = {}
     # test_avg_rewards = {}
@@ -54,7 +54,7 @@ class HeuristicAgent(Agent):
       self.G.reset()
       if render:
         path = self.get_path(self.G)
-        self.render_env(obs, path)
+        self.render_env(obs, path, dump_folder=dump_folder)
         raw_input('Press enter to start')
       j = 0
       k = 0
@@ -78,7 +78,7 @@ class HeuristicAgent(Agent):
         # kspc = self.G.get_ksp_centrality([act_id])
         # ksp_arr.append(kspc[0])
         if render:
-          self.render_env(obs, feas_actions, act_id)
+          self.render_env(obs, feas_actions, act_id, dump_folder=dump_folder)
         # print('feasible actions = {}, chosen edge = {}, edge_features = {}'.format(feas_actions, [act_id, act_e], ftrs))
         if step: raw_input('Press enter to execute action')
         obs, reward, done, info = self.env.step(act_id)
@@ -93,7 +93,7 @@ class HeuristicAgent(Agent):
 
       #Render environment one last time
       if render:
-        self.render_env(obs, path)
+        self.render_env(obs, path, dump_folder=dump_folder)
         raw_input('Press Enter')
         
       test_rewards[self.env.world_num] = ep_reward
@@ -132,19 +132,19 @@ class HeuristicAgent(Agent):
 
 
   
-  def render_env(self, obs, path, act_id=-1):
+  def render_env(self, obs, path, act_id=-1, dump_folder=None):
     edge_widths={}
     edge_colors={}
     posts = self.G.get_posterior(range(len(obs)), obs)
     for i in range(len(obs)):
-      edge_widths[i] = posts[i]
+      edge_widths[i] = posts[i] + 0.15
     for i in path:
       edge_widths[i] = 5.0
       edge_colors[i] = str(0.4)
       if i == act_id:
         edge_widths[i] = 7.0
         edge_colors[i] = str(0.0)
-    self.env.render(edge_widths=edge_widths, edge_colors=edge_colors)
+    self.env.render(edge_widths=edge_widths, edge_colors=edge_colors, dump_folder=dump_folder, curr_sp_len=self.G.curr_sp_len)
   
   def select_forward(self, act_ids, obs, iter, G):
     return act_ids[0]
