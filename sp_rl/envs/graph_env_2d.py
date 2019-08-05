@@ -5,6 +5,7 @@ import scipy
 import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
+import matplotlib
 import matplotlib.pyplot as plt
 plt.style.use('seaborn-paper')
 import numpy as np
@@ -167,7 +168,7 @@ class GraphEnv2D(gym.Env):
       while not solvable:
         if self.mode == "train":
           self.world_num = self.world_arr[self.curr_idx]#np.random.choice(self.world_arr)
-          self.world_num = 197
+          self.world_num = 123#226#dataset 6 - 293 dataset_2d_7 - 123
         else:
           self.world_num = self.world_arr[self.curr_idx]
         self.curr_idx = (self.curr_idx + 1) % self.max_envs
@@ -193,16 +194,19 @@ class GraphEnv2D(gym.Env):
   def render(self, mode='human', edge_widths={}, edge_colors={}, close=False, dump_folder=None, curr_sp_len=0.0):
     edge_width_list = []
     edge_color_list = []
+    MAX_EDGES = 202#193#dataset 6 - 337 dataset 7 - 202
     for edge in self.Gdraw.edges():
       i = self.edge_tup_to_action[edge]
       if i in edge_widths: #self.obs[i] != -1:
         edge_width = edge_widths[i]
         # edge_width_list.append(2.5)
         if self.obs[i] != -1 : #in edge_widths:
-          edge_width += 2.5 #edge_widths[i]
+          edge_width += 2.0 #edge_widths[i]
         edge_width_list.append(edge_width)
       else:
-        edge_width_list.append(0.5)
+        if self.obs[i] != -1 : #in edge_widths:
+          edge_width_list.append(2.0) #edge_widths[i]        
+        else: edge_width_list.append(0.3)
 
       if i in edge_colors and self.obs[i] == -1:
         edge_color_list.append(edge_colors[i])
@@ -218,16 +222,26 @@ class GraphEnv2D(gym.Env):
     self.ax.imshow(self.img, interpolation='nearest', origin='lower', extent=[0,1,0,1], cmap='gray')
     nx.draw_networkx_edges(self.Gdraw, self.pos, ax=self.ax, edge_color=edge_color_list, width=edge_width_list, alpha=0.6)
     nx.draw_networkx_nodes(self.Gdraw, self.pos, ax=self.ax, nodelist=[self.source_node, self.target_node], node_color=['b', 'g'], node_size=20)
-    textstr = 'Edges checked (Total) = %03d (Invalid) = %03d Path length = %.3f'%(self.step_num, self.invalid_checked, curr_sp_len)
+    # textstr = 'Edges checked (Total) = %03d (Invalid) = %03d'%(self.step_num, self.invalid_checked)
+    # textstr = 'Edges checked (Total) = %03d (Invalid) = %03d Path length = %.3f'%(self.step_num, self.invalid_checked, curr_sp_len)
 
     # these are matplotlib.patch.Patch properties
-    props = dict(boxstyle='round', color='white', facecolor='white', alpha=0.3)
+    # props = dict(boxstyle='round', color='white', facecolor='white', alpha=0.3)
 
     # place a text box in upper left in axes coords
-    self.ax.text(-0.14, 1.08, textstr, transform=self.ax.transAxes, fontsize=10,
-      verticalalignment='top', bbox=props)    
+    # self.ax.text(0.05, 1.08, textstr, transform=self.ax.transAxes, fontsize=10,
+    #   verticalalignment='top', bbox=props)    
 
-
+    static_rect = matplotlib.patches.Rectangle((0.0, 1.02), 1.0 , transform=self.ax.transAxes, height=0.06, linewidth=0.4, linestyle='--', edgecolor='k', fill=False, clip_on=False)
+    rect = matplotlib.patches.Rectangle((0.0, 1.02), (self.step_num*1.0)/MAX_EDGES*1.0 , transform=self.ax.transAxes, height=0.06, linewidth=0.5, edgecolor='k', fill=True, facecolor='lightgrey', clip_on=False)
+    leading_edge = matplotlib.patches.Rectangle(((self.step_num*1.0)/MAX_EDGES*1.0, 1.02), 0.0 , transform=self.ax.transAxes, height=0.06, linewidth=1.0, edgecolor='k', fill=True, facecolor='lightgrey', clip_on=False)
+    
+    self.ax.add_patch(static_rect)
+    self.ax.add_patch(rect)
+    self.ax.add_patch(leading_edge)
+    # self.ax.plot([(self.step_num*1.0)/MAX_EDGES*1.0, (self.step_num*1.0)/MAX_EDGES*1.0], [1.02, 1.08], color='k', linestyle='-', linewidth=1.0)
+    # print(rect)
+    print(self.step_num)
     self.fig.canvas.draw()
     if dump_folder is not None:
       file_name = dump_folder + '/' + str(self.step_num)

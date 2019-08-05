@@ -18,8 +18,8 @@ folders=(${base_folder}'dataset_2d_1/dagger_linear_extraf' ${base_folder}'datase
 model_files=('dagger_10_100_100_linear_length_oracle_0.5_0.005_64_10_0.0001_0' 'dagger_10_100_100_linear_length_oracle_0.5_0.005_64_10_0.0001_0'\
              'dagger_10_100_100_linear_length_oracle_0.5_0.005_64_10_0.0001_0' 'dagger_10_100_100_linear_length_oracle_0.5_0.005_64_10_0.0001_0'\
              'dagger_10_100_100_linear_length_oracle_0.5_0.005_64_10_0.0001_0' 'dagger_10_100_100_linear_length_oracle_0.5_0.005_64_10_0.0001_0'\
-             'dagger_10_100_100_linear_length_oracle_0.5_0.005_64_10_0.0001_0', 'dagger_10_100_60_linear_length_oracle_0.5_0.005_64_10_0.0001_0'\
-             'dagger_10_100_60_linear_length_oracle_0.5_0.005_64_10_0.0001_0', 'dagger_10_100_60_linear_length_oracle_0.5_0.005_64_10_0.0001_0')
+             'dagger_10_100_100_linear_length_oracle_0.5_0.005_64_10_0.0001_0' 'dagger_10_100_60_linear_length_oracle_0.5_0.005_64_10_0.0001_0'\
+             'dagger_10_100_60_linear_length_oracle_0.5_0.005_64_10_0.0001_0'  'dagger_10_100_60_linear_length_oracle_0.5_0.005_64_10_0.0001_0')
 
 #Dagger linear with heuristic roll-out
 # folders=(${base_folder}'dataset_2d_1/dagger_linear_hr' ${base_folder}'dataset_2d_2/dagger_linear_hr' ${base_folder}'dataset_2d_3/dagger_linear_hr'\
@@ -47,7 +47,7 @@ model_files=('dagger_10_100_100_linear_length_oracle_0.5_0.005_64_10_0.0001_0' '
 
 
 
-run_idxs=(5)
+run_idxs=(6)
 # 3 5 6 7 8 9)
 # 8 9)
 

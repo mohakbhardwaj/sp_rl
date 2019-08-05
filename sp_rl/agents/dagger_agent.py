@@ -249,9 +249,9 @@ class DaggerAgent(Agent):
   def render_env(self, env, G, obs, path, act_id=-1, dump_folder=None):
     edge_widths={}
     edge_colors={}
-    posts = G.get_posterior(range(len(obs)), obs)
-    for i in range(len(obs)):
-      edge_widths[i] = posts[i] + 0.15
+    # posts = G.get_posterior(range(len(obs)), obs)
+    # for i in range(len(obs)):
+      # edge_widths[i] = posts[i] + 0.15
     for i in path:
       edge_widths[i] = 5.0
       edge_colors[i] = str(0.4)

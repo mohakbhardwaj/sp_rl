@@ -135,16 +135,18 @@ class HeuristicAgent(Agent):
   def render_env(self, obs, path, act_id=-1, dump_folder=None):
     edge_widths={}
     edge_colors={}
-    posts = self.G.get_posterior(range(len(obs)), obs)
-    for i in range(len(obs)):
-      edge_widths[i] = posts[i] + 0.15
+    # posts = self.G.get_posterior(range(len(obs)), obs)
+    # for i in range(len(obs)):
+      # delta_len, prog = self.G.get_delta_centrality([i], obs)
+      # edge_widths[i] = posts[i] + 0.15
     for i in path:
+      # print self.G.get_forward_scores([i])[0]
       edge_widths[i] = 5.0
       edge_colors[i] = str(0.4)
       if i == act_id:
         edge_widths[i] = 7.0
         edge_colors[i] = str(0.0)
-    self.env.render(edge_widths=edge_widths, edge_colors=edge_colors, dump_folder=dump_folder, curr_sp_len=self.G.curr_sp_len)
+    self.env.render(edge_widths=edge_widths, edge_colors=edge_colors, dump_folder=dump_folder, curr_sp_len=self.G.curr_shortest_path_len)
   
   def select_forward(self, act_ids, obs, iter, G):
     return act_ids[0]
